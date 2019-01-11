@@ -20,9 +20,7 @@ class Cubic1D {
   coefficients() {
     const matrix = this.inverseMatrix();
     const ctrl = this.controlPoints();
-    return matrix.map((row) => {
-      return row[0] * ctrl[0] + row[1] * ctrl[1] + row[2] * ctrl[2] + row[3] * ctrl[3];
-    })
+    return matMulVector(matrix, ctrl);
   }
 
   eval(t) {
@@ -35,10 +33,7 @@ class Cubic1D {
 class Interp1D extends Cubic1D {
   constructor(y1, y2, y3, y4) {
     super();
-    this.y1 = y1;
-    this.y2 = y2;
-    this.y3 = y3;
-    this.y4 = y4;
+    this.ctrl = [y1, y2, y3, y4];
   }
 
   static fromCoefficients(coeffs) {
@@ -49,14 +44,11 @@ class Interp1D extends Cubic1D {
   }
 
   controlPoints() {
-    return [this.y1, this.y2, this.y3, this.y4];
+    return this.ctrl.slice();
   }
 
   setControlPoints(points) {
-    this.y1 = points[0];
-    this.y2 = points[1];
-    this.y3 = points[2];
-    this.y4 = points[3];
+    this.ctrl = points.slice();
   }
 
   inverseMatrix() {
@@ -64,6 +56,44 @@ class Interp1D extends Cubic1D {
       [-4.5, 13.5, -13.5, 4.5],
       [9, -22.5, 18, -4.5],
       [-5.5, 9, -4.5, 1],
+      [1, 0, 0, 0],
+    ];
+  }
+}
+
+// A one-dimensional cubic Bezier curve.
+class Bezier1D extends Cubic1D {
+  constructor(p1, p2, p3, p4) {
+    super();
+    this.ctrl = [p1, p2, p3, p4];
+  }
+
+  static fromCoefficients(coeffs) {
+    const curve = Interp1D.fromCoefficients(coeffs);
+    const p = [curve.eval(0), curve.eval(1 / 3), curve.eval(2 / 3), curve.eval(1)];
+    const matrix = [
+      [1, 0, 0, 0],
+      [-0.83333333, 3, -1.5, 0.33333333],
+      [0.33333333, -1.5, 3, -0.83333333],
+      [0, 0, 0, 1],
+    ];
+    const ctrl = matMulVector(matrix, p);
+    return new Bezier1D(ctrl[0], ctrl[1], ctrl[2], ctrl[3]);
+  }
+
+  controlPoints() {
+    return this.ctrl.slice();
+  }
+
+  setControlPoints(points) {
+    this.ctrl = points.slice();
+  }
+
+  inverseMatrix() {
+    return [
+      [-1, 3, -3, 1],
+      [3, -6, 3, 0],
+      [-3, 3, 0, 0],
       [1, 0, 0, 0],
     ];
   }
@@ -93,4 +123,10 @@ class Cubic2D {
   eval(t) {
     return [this.x.eval(t), this.y.eval(t)];
   }
+}
+
+function matMulVector(mat, vec) {
+  return mat.map((row) => {
+    return row[0] * vec[0] + row[1] * vec[1] + row[2] * vec[2] + row[3] * vec[3];
+  })
 }

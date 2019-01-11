@@ -7,8 +7,9 @@
   </head>
   <body>
     <label>Curve type:</label>
-    <select id="curve-type">
-      <option value="Interp1D">Interpolation</option>
+    <select id="curve-type" onChange="updateType()">
+      <option value="Interp1D" selected>Interpolation</option>
+      <option value="Bezier1D">Bezier</option>
     </select>
     <br>
     <canvas id="canvas" width="400" height="400">Upgrade your browser.</canvas>
@@ -22,7 +23,7 @@
 
       function updateType() {
         const typeName = document.getElementById('curve-type').value;
-        let cls = {'Interp1D': Interp1D}[typeName];
+        let cls = {'Interp1D': Interp1D, 'Bezier1D': Bezier1D}[typeName];
         curve.x = cls.fromCoefficients(curve.x.coefficients());
         curve.y = cls.fromCoefficients(curve.y.coefficients());
         redraw();
