@@ -29,6 +29,17 @@ def bezier_inverse():
     return interp_inverse() @ matrix
 
 
+def bspline_inverse():
+    matrix = np.array([
+        [0, 2 / 3, -1, 1],
+        [0, -1 / 3, 0, 1],
+        [0, 2 / 3, 1, 1],
+        [6, 11 / 3, 2, 1],
+    ], dtype=np.float64)
+    return np.linalg.inv(matrix)
+
+
 print('Interp inverse:', interp_inverse())
 print('Bezier basis:', bezier_basis())
 print('Bezier inverse:', bezier_inverse())
+print('B-spline inverse:', bspline_inverse())

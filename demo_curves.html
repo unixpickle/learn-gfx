@@ -10,20 +10,25 @@
     <select id="curve-type" onChange="updateType()">
       <option value="Interp1D" selected>Interpolation</option>
       <option value="Bezier1D">Bezier</option>
+      <option value="BSpline1D">B-spline</option>
     </select>
     <br>
     <canvas id="canvas" width="400" height="400">Upgrade your browser.</canvas>
   
     <script type="text/javascript">
       let curve = new Cubic2D(
-        new Interp1D(10, 110, 210, 310),
-        new Interp1D(20, 50, 50, 20),
+        new Interp1D([10, 110, 210, 310]),
+        new Interp1D([20, 50, 50, 20]),
       );
       const canvas = document.getElementById('canvas');
 
       function updateType() {
         const typeName = document.getElementById('curve-type').value;
-        let cls = {'Interp1D': Interp1D, 'Bezier1D': Bezier1D}[typeName];
+        let cls = {
+          'Interp1D': Interp1D,
+          'Bezier1D': Bezier1D,
+          'BSpline1D': BSpline1D,
+        }[typeName];
         curve.x = cls.fromCoefficients(curve.x.coefficients());
         curve.y = cls.fromCoefficients(curve.y.coefficients());
         redraw();
