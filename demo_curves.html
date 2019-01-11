@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Curve Demo</title>
+    <script src="src/curves.js"></script>
+  </head>
+  <body>
+    <label>Curve type:</label>
+    <select id="curve-type">
+      <option value="Interp1D">Interpolation</option>
+    </select>
+    <br>
+    <canvas id="canvas" width="400" height="400">Upgrade your browser.</canvas>
+  
+    <script type="text/javascript">
+      let curve = new Cubic2D(
+        new Interp1D(10, 110, 210, 310),
+        new Interp1D(20, 50, 50, 20),
+      );
+      const canvas = document.getElementById('canvas');
+
+      function updateType() {
+        const typeName = document.getElementById('curve-type').value;
+        let cls = {'Interp1D': Interp1D}[typeName];
+        curve.x = cls.fromCoefficients(curve.x.coefficients());
+        curve.y = cls.fromCoefficients(curve.y.coefficients());
+        redraw();
+      }
+
+      function redraw() {
+        const ctx = canvas.getContext('2d');
+
+        ctx.clearRect(0, 0, 400, 400);
+
+        ctx.beginPath();
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 10;
+        ctx.lineCap = 'round';
+        for (let t = 0; t <= 1; t += 0.001) {
+          const [x, y] = curve.eval(t);
+          if (t === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.stroke();
+
+        curve.controlPoints().forEach((p) => {
+          ctx.fillStyle = 'gray';
+          const [x, y] = p;
+          ctx.beginPath();
+          ctx.arc(x, y, 10, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      function registerMouse() {
+        let ctrlIdx = -1;
+        canvas.addEventListener('mousedown', (e) => {
+          const bounds = canvas.getBoundingClientRect();
+          const x = e.clientX - bounds.left;
+          const y = e.clientY - bounds.top;
+          let minDistance = 1000000;
+          curve.controlPoints().forEach((p, i) => {
+            const dist = Math.sqrt(Math.pow(p[0] - x, 2) + Math.pow(p[1] - y, 2));
+            if (dist < minDistance) {
+              minDistance = dist;
+              ctrlIdx = i;
+            }
+          });
+          const newPoints = curve.controlPoints();
+          newPoints[ctrlIdx] = [x, y];
+          curve.setControlPoints(newPoints);
+          redraw();
+        });
+        window.addEventListener('mouseup', (e) => ctrlIdx = -1);
+        window.addEventListener('mousemove', (e) => {
+          if (ctrlIdx < 0) {
+            return;
+          }
+          const bounds = canvas.getBoundingClientRect();
+          const x = e.clientX - bounds.left;
+          const y = e.clientY - bounds.top;
+          const newPoints = curve.controlPoints();
+          newPoints[ctrlIdx] = [x, y];
+          curve.setControlPoints(newPoints);
+          redraw();
+        });
+      }
+
+      registerMouse();
+      redraw();
+      </script>
+  </body>
+</html>
