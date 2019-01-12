@@ -22,3 +22,121 @@ function cornerCutting(points, numDivisions, fraction) {
   }
   return points;
 }
+
+// Perform a step of Loop subdivision on the surface.
+// The vertices are represented as an array of arrays,
+// where each interior array contains three coordinates,
+// and triangles are made from each consecutive triplet.
+function loopSubdivision(vertices) {
+  if (vertices.length % 3) {
+    throw new Error('invalid triangle mesh');
+  }
+  const adj = new MeshAdjacency(vertices);
+  const newVertices = [];
+  for (let i = 0; i < vertices.length; i += 3) {
+    const p1 = vertices[i];
+    const p2 = vertices[i + 1];
+    const p3 = vertices[i + 2];
+    newVertices.push(p1);
+    newVertices.push(loopSubdivisionOdd(adj, p1, p2));
+    newVertices.push(loopSubdivisionOdd(adj, p1, p3));
+
+    newVertices.push(p2);
+    newVertices.push(loopSubdivisionOdd(adj, p2, p3));
+    newVertices.push(loopSubdivisionOdd(adj, p2, p1));
+
+    newVertices.push(p3);
+    newVertices.push(loopSubdivisionOdd(adj, p3, p1));
+    newVertices.push(loopSubdivisionOdd(adj, p3, p2));
+
+    newVertices.push(loopSubdivisionOdd(adj, p1, p2));
+    newVertices.push(loopSubdivisionOdd(adj, p2, p3));
+    newVertices.push(loopSubdivisionOdd(adj, p3, p1));
+  }
+  const newAdj = new MeshAdjacency(newVertices.slice());
+  for (let i = 0; i < newVertices.length; i += 3 * 4) {
+    for (let j = 0; j < 9; j += 3) {
+      newVertices[i + j] = loopSubdivisionEven(newAdj, newVertices[i + j]);
+    }
+  }
+  return newVertices;
+}
+
+function loopSubdivisionEven(adj, p) {
+  const neighbors = adj.adjacentVertices(p);
+  const n = neighbors.length;
+  const beta = (5 / 8 - Math.pow(3 / 8 + Math.cos(2 * Math.PI / n) / 4, 2)) / n;
+  const result = [0, 0, 0];
+  for (let i = 0; i < 3; ++i) {
+    let sum = (1 - n * beta) * p[i];
+    neighbors.forEach((p1) => sum += p1[i] * beta);
+    result[i] = sum;
+  }
+  return result;
+}
+
+function loopSubdivisionOdd(adj, p1, p2) {
+  const neighbors = adj.verticesNearEdge(p1, p2);
+  if (neighbors.length !== 2) {
+    return midpoint3D(p1, p2);
+  }
+  const result = [0, 0, 0];
+  for (let i = 0; i < 3; ++i) {
+    result[i] = 3 / 8 * p1[i] + 3 / 8 * p2[i] + 1 / 8 * neighbors[0][i] + 1 / 8 * neighbors[1][i];
+  }
+  return result;
+}
+
+// An adjacency map for triangle meshes.
+//
+// Operates on an array of vertices, where each vertex is
+// an array of three numbers, and each triangle is stored
+// as three consecutive vertices.
+class MeshAdjacency {
+  constructor(vertices) {
+    this.vertices = vertices;
+    this.pointToTriangles = {};
+    for (let i = 0; i < vertices.length; i += 3) {
+      const id = i / 3;
+      for (let j = i; j < i + 3; ++j) {
+        const p = vertices[j];
+        if (!this.pointToTriangles[p]) {
+          this.pointToTriangles[p] = [];
+        }
+        this.pointToTriangles[p].push(id);
+      }
+    }
+  }
+
+  triangle(id) {
+    return this.vertices.slice(id * 3, id * 3 + 3);
+  }
+
+  verticesNearEdge(p1, p2) {
+    const result = [];
+    this.pointToTriangles[p1].filter((t) => this.triangle(t).indexOf(p2) >= 0).forEach((t) => {
+      this.triangle(t).forEach((p) => {
+        if (p != p1 && p != p2) {
+          result.push(p);
+        }
+      });
+    });
+    return result;
+  }
+
+  adjacentVertices(p) {
+    const result = [];
+    this.pointToTriangles[p].forEach((t) => {
+      this.triangle(t).forEach((p1) => {
+        if (p1 != p && result.indexOf(p1) < 0) {
+          result.push(p1);
+        }
+      });
+    });
+    return result;
+  }
+}
+
+function midpoint3D(p1, p2) {
+  return [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2, (p1[2] + p2[2]) / 2];
+}
