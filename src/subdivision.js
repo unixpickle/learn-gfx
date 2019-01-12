@@ -37,27 +37,21 @@ function loopSubdivision(vertices) {
     const p1 = vertices[i];
     const p2 = vertices[i + 1];
     const p3 = vertices[i + 2];
-    newVertices.push(p1);
+    newVertices.push(loopSubdivisionEven(adj, p1));
     newVertices.push(loopSubdivisionOdd(adj, p1, p2));
     newVertices.push(loopSubdivisionOdd(adj, p1, p3));
 
-    newVertices.push(p2);
+    newVertices.push(loopSubdivisionEven(adj, p2));
     newVertices.push(loopSubdivisionOdd(adj, p2, p3));
     newVertices.push(loopSubdivisionOdd(adj, p2, p1));
 
-    newVertices.push(p3);
+    newVertices.push(loopSubdivisionEven(adj, p3));
     newVertices.push(loopSubdivisionOdd(adj, p3, p1));
     newVertices.push(loopSubdivisionOdd(adj, p3, p2));
 
     newVertices.push(loopSubdivisionOdd(adj, p1, p2));
     newVertices.push(loopSubdivisionOdd(adj, p2, p3));
     newVertices.push(loopSubdivisionOdd(adj, p3, p1));
-  }
-  const newAdj = new MeshAdjacency(newVertices.slice());
-  for (let i = 0; i < newVertices.length; i += 3 * 4) {
-    for (let j = 0; j < 9; j += 3) {
-      newVertices[i + j] = loopSubdivisionEven(newAdj, newVertices[i + j]);
-    }
   }
   return newVertices;
 }
@@ -114,9 +108,11 @@ class MeshAdjacency {
 
   verticesNearEdge(p1, p2) {
     const result = [];
-    this.pointToTriangles[p1].filter((t) => this.triangle(t).indexOf(p2) >= 0).forEach((t) => {
+    this.pointToTriangles[p1].filter((t) => {
+      return containsPoint(this.triangle(t), p2);
+    }).forEach((t) => {
       this.triangle(t).forEach((p) => {
-        if (p != p1 && p != p2) {
+        if (!pointsEqual(p, p1) && !pointsEqual(p, p2)) {
           result.push(p);
         }
       });
@@ -128,7 +124,7 @@ class MeshAdjacency {
     const result = [];
     this.pointToTriangles[p].forEach((t) => {
       this.triangle(t).forEach((p1) => {
-        if (p1 != p && result.indexOf(p1) < 0) {
+        if (!pointsEqual(p1, p) && !containsPoint(result, p1)) {
           result.push(p1);
         }
       });
@@ -139,4 +135,12 @@ class MeshAdjacency {
 
 function midpoint3D(p1, p2) {
   return [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2, (p1[2] + p2[2]) / 2];
+}
+
+function containsPoint(shape, p) {
+  return shape.filter((p1) => pointsEqual(p, p1)).length > 0;
+}
+
+function pointsEqual(p1, p2) {
+  return ('' + p1) === ('' + p2);
 }
