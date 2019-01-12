@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Corner Cutting Demo</title>
+    <script src="src/subdivision.js"></script>
+    <script src="deps/three.min.js"></script>
+  </head>
+  <body>
+    x: <input id="dest-x" value="1"><br>
+    y: <input id="dest-y" value="2"><br>
+    z: <input id="dest-z" value="-9"><br>
+    <button onclick="updateDestination()">Update</button><br>
+    <script type="text/javascript">
+      let destination = [1, 2, -9];
+
+      function updateDestination() {
+        destination[0] = parseFloat(document.getElementById('dest-x').value);
+        destination[1] = parseFloat(document.getElementById('dest-y').value);
+        destination[2] = parseFloat(document.getElementById('dest-z').value);
+      }
+
+      function createArm(length) {
+        const material = new THREE.MeshPhongMaterial({
+          color: 0xffffff,
+          side: THREE.DoubleSide,
+          flatShading: true,
+        });
+
+        const cylGeom = new THREE.CylinderGeometry(0.15, 0.15, length, 32);
+        const cyl = new THREE.Mesh(cylGeom, material);
+        cyl.position.set(0, length / 2, 0);
+
+        const sphereGeom = new THREE.SphereGeometry(0.2, 32, 32);
+        const sphere = new THREE.Mesh(sphereGeom, material);
+
+        const container = new THREE.Group();
+        container.add(cyl);
+        container.add(sphere);
+        
+        return container;
+      }
+
+      function createHand() {
+        const material = new THREE.MeshPhongMaterial({
+          color: 0xff0000,
+          side: THREE.DoubleSide,
+          flatShading: true,
+        });
+        const geometry = new THREE.SphereGeometry(0.2, 32, 32);
+        return new THREE.Mesh(geometry, material);
+      }
+
+      function createTarget() {
+        const material = new THREE.MeshPhongMaterial({
+          color: 0x00ff00,
+          side: THREE.DoubleSide,
+          flatShading: true,
+        });
+        const geometry = new THREE.SphereGeometry(0.3, 32, 32);
+        return new THREE.Mesh(geometry, material);
+      }
+
+      function initialize() {
+        const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 20);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(400, 400);
+        renderer.setClearColor(0x4d2c5b, 1);
+        document.body.appendChild(renderer.domElement);
+
+        const light = new THREE.PointLight(0xffffff, 1);
+        light.position.set(5, 5, 10);
+        const scene = new THREE.Scene();
+        scene.add(light);
+
+        const arm1 = createArm(2);
+        const arm2 = createArm(1.5);
+        const hand = createHand();
+        const target = createTarget();
+
+        arm1.add(arm2);
+        arm2.add(hand);
+        hand.position.set(0, 1.5, 0);
+        arm2.position.set(0, 2, 0);
+        arm1.position.set(0, 0, -8);
+        scene.add(arm1);
+        scene.add(target);
+
+        setInterval(() => {
+          const objectiveFn = () => {
+            arm1.updateMatrixWorld();
+            arm2.updateMatrixWorld();
+            const world = hand.getWorldPosition(new THREE.Vector3(0, 0, 0));
+            return Math.pow(world.x - destination[0], 2) +
+              Math.pow(world.y - destination[1], 2) +
+              Math.pow(world.z - destination[2], 2);
+          };
+          [arm1, arm2].forEach((arm) => {
+            ['x', 'y', 'z'].forEach((axis) => {
+              const oldObj = objectiveFn();
+              const oldAngle = arm.rotation[axis];
+              const delta = 0.01;
+              arm.rotation[axis] += delta;
+              arm.rotation.onChangeCallback();
+              const newObj = objectiveFn();
+              if (newObj > oldObj) {
+                arm.rotation[axis] -= delta * 2;
+                arm.rotation.onChangeCallback();
+              }
+            });
+          });
+          target.position.set(destination[0], destination[1], destination[2]);
+          renderer.render(scene, camera);
+        }, 1000 / 24);
+      }
+
+      initialize();
+    </script>
+  </body>
+</html>
