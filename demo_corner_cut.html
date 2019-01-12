@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Corner Cutting Demo</title>
+    <script src="src/subdivision.js"></script>
+    <style>
+    canvas {
+      border: 1px solid #d5d5d5;
+    }
+    </style>
+  </head>
+  <body>
+    <button onclick="clearDrawing()">Clear</button>
+    <br>
+    <canvas id="editor" width="400" height="400">Upgrade your browser.</canvas>
+    <hline></hline>
+    <canvas id="result" width="400" height="400">Upgrade your browser.</canvas>
+  
+    <script type="text/javascript">
+      let points = [];
+      const editor = document.getElementById('editor');
+      const result = document.getElementById('result');
+
+      function clearDrawing() {
+        points = [];
+        redraw();
+      }
+
+      function redraw() {
+        let ctx = editor.getContext('2d');
+
+        const strokePoints = (ps) => {
+          if (!ps.length) {
+            return;
+          }
+          ctx.strokeStyle = 'black';
+          ctx.lineWidth = 5;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(ps[0][0], ps[0][1]);
+          ps.slice(1).forEach((p) => ctx.lineTo(p[0], p[1]));
+          ctx.closePath();
+          ctx.stroke();
+        };
+
+        ctx.clearRect(0, 0, 400, 400);
+        points.forEach((p) => {
+          ctx.fillStyle = 'black';
+          const [x, y] = p;
+          ctx.beginPath();
+          ctx.arc(x, y, 10, 0, Math.PI * 2);
+          ctx.fill();
+          strokePoints(points);
+        });
+
+        ctx = result.getContext('2d');
+        ctx.clearRect(0, 0, 400, 400);
+        const smoothed = cornerCutting(points, 5, 1 / 4);
+        strokePoints(smoothed);
+      }
+
+      function registerMouse() {
+        let ctrlIdx = -1;
+        editor.addEventListener('mousedown', (e) => {
+          const bounds = editor.getBoundingClientRect();
+          const x = e.clientX - bounds.left;
+          const y = e.clientY - bounds.top;
+          points.push([x, y]);
+          redraw();
+        });
+      }
+
+      registerMouse();
+      </script>
+  </body>
+</html>
