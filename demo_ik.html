@@ -102,10 +102,8 @@
               arm.rotation[axis] += delta;
               arm.rotation.onChangeCallback();
               const newObj = objectiveFn();
-              if (newObj > oldObj) {
-                arm.rotation[axis] -= delta * 2;
-                arm.rotation.onChangeCallback();
-              }
+              arm.rotation[axis] = oldAngle + 0.01 * (oldObj - newObj) / delta;
+              arm.rotation.onChangeCallback();
             });
           });
           target.position.set(destination[0], destination[1], destination[2]);
