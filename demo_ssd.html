@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>SSD in two dimensions</title>
+    <script src="deps/three.min.js"></script>
+  </head>
+  <body>
+    <canvas id="canvas" width="400" height="600">Upgrade your browser.</canvas>
+    <script type="text/javascript">
+      function bodyHitTest(x, y) {
+        if (y < 100) {
+          return x >= 150 && x <= 250;
+        } else if (y < 180) {
+          return x >= 50 && x <= 350;
+        } else if (y < 400) {
+          return (x >= 50 && x <= 100) || (x >= 120 && x <= 280) || (x >= 300 && x <= 350);
+        } else {
+          return (x >= 120 && x <= 190) || (x >= 210 && x <= 280);
+        }
+      }
+
+      function jointFrac(p) {
+        const x = p[0];
+        const y = p[1];
+        if (y >= 100 && y < 400 && x >= 300 && x <= 350) {
+          if (y > 200 && y < 250) {
+            return (y - 200) / 50;
+          } else if (y >= 250) {
+            return 1;
+          }
+          return 0;
+        }
+        return 0;
+      }
+
+      function initialQuadMesh() {
+        const result = [];
+        for (let x = 0; x < 400 - 10; x += 10) {
+          for (let y = 0; y < 600 - 10; y += 10) {
+            if (bodyHitTest(x, y) && bodyHitTest(x + 10, y) &&
+                bodyHitTest(x, y + 10) && bodyHitTest(x + 10, y + 10)) {
+              result.push([x, y], [x + 10, y], [x + 10, y + 10], [x, y + 10]);
+            }
+          }
+        }
+        return result;
+      }
+
+      function boneMeshForAngle(mesh, angle) {
+        const newMesh = [];
+        mesh.forEach((p) => {
+          const f = jointFrac(p);
+          const relX = p[0] - 325;
+          const relY = p[1] - 225;
+          const rotX = Math.cos(angle) * relX - Math.sin(angle) * relY;
+          const rotY = Math.sin(angle) * relX + Math.cos(angle) * relY;
+          newMesh.push([p[0] * (1 - f) + f * (rotX + 325),
+                        p[1] * (1 - f) + f * (rotY + 225)]);
+        });
+        return newMesh;
+      }
+
+      function drawMesh(mesh) {
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = 0; i < mesh.length; i += 4) {
+          ctx.moveTo(mesh[i][0], mesh[i][1]);
+          mesh.slice(i + 1, i + 4).forEach((p) => ctx.lineTo(p[0], p[1]));
+          ctx.lineTo(mesh[i][0], mesh[i][1]);
+        }
+        ctx.stroke();
+      }
+
+      let angle = 0;
+      setInterval(() => {
+        angle += 0.1;
+        drawMesh(boneMeshForAngle(initialQuadMesh(), angle));
+      }, 1000/10);
+    </script>
+  </body>
+</html>
