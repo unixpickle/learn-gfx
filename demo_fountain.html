@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Particle Fountain</title>
+    <script src="deps/three.min.js"></script>
+  </head>
+  <body>
+    <script type="text/javascript">
+      const material = new THREE.MeshPhongMaterial({
+        color: 0x3377ff,
+        side: THREE.DoubleSide,
+        flatShading: true,
+      });
+      const geometry = new THREE.SphereGeometry(0.05, 32, 32);
+
+      function createParticle() {
+        return new THREE.Mesh(geometry, material);
+      }
+
+      class Particle {
+        constructor() {
+          this.object = createParticle();
+          this.reset();
+        }
+
+        reset() {
+          this.object.position.set(0, -2, -10);
+          const angle = Math.random() * Math.PI * 2;
+          const radius = Math.random() * 0.3 + 0.1;
+          this.vx = Math.cos(angle) * radius;
+          this.vy = Math.random() + 0.5;
+          this.vz = Math.sin(angle) * radius;
+        }
+
+        step(dt) {
+          dt *= 10;
+          const newX = this.object.position.x + this.vx * dt;
+          const newY = this.object.position.y + this.vy * dt;
+          const newZ = this.object.position.z + this.vz * dt;
+          this.vy -= 0.3 * dt;
+          this.object.position.set(newX, newY, newZ);
+          if (this.object.position.y < -2) {
+            this.reset();
+          }
+        }
+      }
+
+      function initialize() {
+        const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 20);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(400, 400);
+        document.body.appendChild(renderer.domElement);
+
+        const light = new THREE.PointLight(0xffffff, 1);
+        light.position.set(5, 5, 10);
+        const scene = new THREE.Scene();
+        scene.add(light);
+
+        const particles = [];
+        for (let i = 0; i < 2000; ++i) {
+          const p = new Particle();
+          scene.add(p.object);
+          particles.push(p);
+        }
+        setInterval(() => {
+          particles.forEach((p) => p.step(1/24));
+          renderer.render(scene, camera);
+        }, 1000/24);
+      }
+
+      initialize();
+    </script>
+  </body>
+</html>
