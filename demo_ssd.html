@@ -5,7 +5,7 @@
     <title>SSD in two dimensions</title>
   </head>
   <body>
-    <canvas id="canvas" width="400" height="600">Upgrade your browser.</canvas>
+    <canvas id="canvas" width="500" height="600">Upgrade your browser.</canvas>
     <script type="text/javascript">
       function bodyHitTest(x, y) {
         if (y < 100) {
@@ -75,11 +75,14 @@
         ctx.stroke();
       }
 
-      let angle = 0;
-      setInterval(() => {
-        angle += 0.1;
+      drawMesh(initialQuadMesh());
+      window.addEventListener('mousemove', (e) => {
+        const rect = document.getElementById('canvas').getBoundingClientRect();
+        const x = e.clientX - (rect.left + 325);
+        const y = e.clientY - (rect.top + 225);
+        const angle = Math.atan2(y, x) - Math.PI / 2;
         drawMesh(boneMeshForAngle(initialQuadMesh(), angle));
-      }, 1000/10);
+      });
     </script>
   </body>
 </html>
