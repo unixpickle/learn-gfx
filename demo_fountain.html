@@ -8,11 +8,11 @@
   <body>
     <script type="text/javascript">
       const material = new THREE.MeshPhongMaterial({
-        color: 0x3377ff,
+        color: 0x66ccff,
         side: THREE.DoubleSide,
         flatShading: true,
       });
-      const geometry = new THREE.SphereGeometry(0.05, 32, 32);
+      const geometry = new THREE.SphereGeometry(0.02, 32, 32);
 
       function createParticle() {
         return new THREE.Mesh(geometry, material);
@@ -27,9 +27,9 @@
         reset() {
           this.object.position.set(0, -2, -10);
           const angle = Math.random() * Math.PI * 2;
-          const radius = Math.random() * 0.3 + 0.1;
+          const radius = Math.random() * 0.2 + 0.1;
           this.vx = Math.cos(angle) * radius;
-          this.vy = Math.random() + 0.5;
+          this.vy = Math.random() * 1.2 + 0.3;
           this.vz = Math.sin(angle) * radius;
         }
 
@@ -57,8 +57,19 @@
         const scene = new THREE.Scene();
         scene.add(light);
 
+        const groundGeom = new THREE.PlaneGeometry(12, 12);
+        const groundMaterial = new THREE.MeshPhongMaterial({
+          color: 0x00ff00,
+          side: THREE.DoubleSide,
+          flatShading: true,
+        });
+        const ground = new THREE.Mesh(groundGeom, groundMaterial);
+        ground.rotation.set(-Math.PI / 2, 0, 0);
+        ground.position.set(0, -2, -10);
+        scene.add(ground);
+
         const particles = [];
-        for (let i = 0; i < 2000; ++i) {
+        for (let i = 0; i < 7000; ++i) {
           const p = new Particle();
           scene.add(p.object);
           particles.push(p);
