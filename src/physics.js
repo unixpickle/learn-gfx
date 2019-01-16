@@ -8,6 +8,10 @@ class Particle {
     this.vy = vy || 0;
     this.vz = vz || 0;
   }
+
+  energy() {
+    return Math.pow(this.vx, 2) + Math.pow(this.vy, 2) + Math.pow(this.vz, 2);
+  }
 }
 
 // An abstract base class for something which computes the

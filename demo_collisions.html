@@ -6,6 +6,8 @@
     <script src="src/physics.js"></script>
   </head>
   <body>
+    Total energy: <label id="energy">0</label>
+    <br>
     <canvas width="400" height="400" id="canvas">Upgrade your browser.</canvas>
     <script type="text/javascript">
       const GRAVITY = 10;
@@ -21,6 +23,22 @@
 
         distance(p1) {
           return Math.sqrt(Math.pow(this.x - p1.x, 2) + Math.pow(this.y - p1.y, 2));
+        }
+      }
+
+      class RollingAvg {
+        constructor() {
+          this.first = true;
+          this.value = 0;
+        }
+
+        add(value) {
+          if (this.first) {
+            this.first = false;
+            this.value = value;
+          } else {
+            this.value = 0.99 * this.value + 0.01 * value;
+          }
         }
       }
 
@@ -54,6 +72,8 @@
         }
       }
 
+      let rollingEnergy = new RollingAvg();
+
       function drawParticles(particles) {
         const ctx = document.getElementById('canvas').getContext('2d');
         ctx.clearRect(0, 0, 400, 400);
@@ -63,6 +83,12 @@
           ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
           ctx.fill();
         });
+
+        let totalEnergy = 0;
+        particles.forEach((p) => totalEnergy += p.energy());
+        particles.forEach((p) => totalEnergy += GRAVITY * (400 - p.y));
+        rollingEnergy.add(totalEnergy);
+        document.getElementById('energy').textContent = Math.ceil(rollingEnergy.value);
       }
 
       function initialize() {
