@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Particle Collision</title>
+    <script src="src/physics.js"></script>
   </head>
   <body>
     <canvas width="400" height="400" id="canvas">Upgrade your browser.</canvas>
@@ -10,50 +11,46 @@
       const GRAVITY = 10;
       const COLLISION_POWER = 1000;
       const NUM_BALLS = 15;
-      const EULER_STEPS = 20;
+      const ODE_STEPS = 20;
 
-      class Particle {
+      class Ball extends Particle {
         constructor(radius, x, y) {
+          super(x, y);
           this.radius = radius;
-          this.x = x;
-          this.y = y;
-          this.vx = 0;
-          this.vy = 0;
-        }
-
-        updatePosition(dt) {
-          this.x += this.vx * dt;
-          this.y += this.vy * dt;
-        }
-
-        updateVelocity(particles, dt) {
-          particles.forEach((p) => {
-            if (p === this) {
-              return;
-            }
-            const dist = this.distance(p);
-            if (dist < this.radius + p.radius) {
-              const fx = COLLISION_POWER * (this.x - p.x) / dist;
-              const fy = COLLISION_POWER * (this.y - p.y) / dist;
-              this.vx += dt * fx;
-              this.vy += dt * fy;
-            }
-          });
-          if (this.x - this.radius < 0) {
-            this.vx += COLLISION_POWER * dt;
-          } else if (this.x + this.radius >= 400) {
-            this.vx -= COLLISION_POWER * dt;
-          }
-          if (this.y + this.radius > 400) {
-            this.vy -= COLLISION_POWER * dt;
-          } else if (this.y - this.radius < 0) {
-            this.vy += COLLISION_POWER * dt;
-          }
-          this.vy += GRAVITY * dt;
         }
 
         distance(p1) {
           return Math.sqrt(Math.pow(this.x - p1.x, 2) + Math.pow(this.y - p1.y, 2));
+        }
+      }
+
+      class Collisions extends ForceField {
+        forces(particles) {
+          return particles.map((p) => {
+            const force = [0, 0, 0];
+            particles.forEach((p1) => {
+              if (p === p1) {
+                return;
+              }
+              const dist = p.distance(p1);
+              if (dist < p.radius + p1.radius) {
+                force[0] += COLLISION_POWER * (p.x - p1.x) / dist;
+                force[1] += COLLISION_POWER * (p.y - p1.y) / dist;
+              }
+            });
+            if (p.x - p.radius < 0) {
+              force[0] += COLLISION_POWER;
+            } else if (p.x + p.radius >= 400) {
+              force[0] -= COLLISION_POWER;
+            }
+            if (p.y + p.radius > 400) {
+              force[1] -= COLLISION_POWER;
+            } else if (p.y - p.radius < 0) {
+              force[1] += COLLISION_POWER;
+            }
+            force[1] += GRAVITY;
+            return force;
+          });
         }
       }
 
@@ -71,14 +68,13 @@
       function initialize() {
         const particles = [];
         for (let i = 0; i < NUM_BALLS; ++i) {
-          const p = new Particle(15, Math.random() * 400, Math.random() * 400);
+          const p = new Ball(15, Math.random() * 400, Math.random() * 400);
           particles.push(p);
         }
 
         setInterval(() => {
-          for (let i = 0; i < EULER_STEPS; ++i) {
-            particles.forEach((p) => p.updatePosition(1 / 24 / EULER_STEPS));
-            particles.forEach((p) => p.updateVelocity(particles, 1 / 24 / EULER_STEPS));
+          for (let i = 0; i < ODE_STEPS; ++i) {
+            rk4Step(particles, new Collisions(), 1 / 24 / ODE_STEPS);
           }
           drawParticles(particles);
         }, 1000 / 24);
