@@ -12,6 +12,11 @@ class Particle {
   energy() {
     return Math.pow(this.vx, 2) + Math.pow(this.vy, 2) + Math.pow(this.vz, 2);
   }
+
+  distance(p1) {
+    return Math.sqrt(Math.pow(this.x - p1.x, 2) + Math.pow(this.y - p1.y, 2) +
+      Math.pow(this.z - p1.z, 2));
+  }
 }
 
 // An abstract base class for something which computes the
