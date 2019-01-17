@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Cloth Simulation</title>
+    <script src="src/physics.js"></script>
+    <script src="src/mesh.js"></script>
+    <script src="deps/three.min.js"></script>
+  </head>
+  <body>
+    <script type="text/javascript">
+      const ODE_STEPS = 10;
+
+      let mesh = null;
+      const material = new THREE.MeshPhongMaterial({
+        color: 0xff0000,
+        side: THREE.DoubleSide,
+        flatShading: true,
+      });
+      const geometry = new THREE.Geometry();
+
+      class Field {
+        forces(particles) {
+          const res = mesh.forces(particles);
+          
+          // Gravity
+          res.forEach((f) => f[1] += 0.1);
+
+          // TODO: ball collision.
+
+          return res;
+        }
+      }
+
+      function createCloth() {
+        // TODO: compute faces here.
+        updateCloth();
+        return new THREE.Mesh(geometry, material);
+      }
+
+      function updateCloth() {
+        geometry.vertices = [];
+        // TODO: recompute vertices here.
+        geometry.verticesNeedUpdate = true;
+      }
+
+      function createBall() {
+        // TODO: this.
+      }
+
+      function initialize() {
+        mesh = new Mesh(50, 50, 1e-5, 0.001, (i, j) => {
+          const x = (i - 25) / 50;
+          const z = (i - 25) / 50 - 4;
+          return [x, -1, z];
+        });
+
+        const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 20);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(400, 400);
+        document.body.appendChild(renderer.domElement);
+
+        const light = new THREE.PointLight(0xffffff, 1);
+        light.position.set(5, 5, 10);
+        const scene = new THREE.Scene();
+        scene.add(light);
+
+        scene.add(createCloth());
+        scene.add(createBall());
+
+        setInterval(() => {
+          for (let i = 0; i < ODE_STEPS; ++i) {
+            rk4Step(mesh.particles, new Field(), 1000 / 24 / ODE_STEPS);
+          }
+          renderer.render(scene, camera);
+        }, 1000/24);
+      }
+
+      initialize();
+    </script>
+  </body>
+</html>
