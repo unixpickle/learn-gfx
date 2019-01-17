@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>2D mesh demo</title>
+    <script src="src/physics.js"></script>
+    <script src="src/mesh.js"></script>
+  </head>
+  <body>
+    <canvas id="canvas" width="400" height="400">Upgrade your browser.</canvas>
+    <script type="text/javascript">
+      const ODE_STEPS = 10;
+
+      let mesh = null;
+      let dragParticle = null;
+      let dragPoint = [0, 0];
+
+      class Field {
+        forces(particles) {
+          const res = mesh.forces(particles);
+          if (dragParticle) {
+            res[particles.indexOf(dragParticle)] = [0, 0, 0];
+          }
+          return res;
+        }
+      }
+
+      function setupPointer() {
+        const canvas = document.getElementById('canvas');
+        const pos = (e) => {
+          const rect = canvas.getBoundingClientRect();
+          return [e.clientX - rect.left, e.clientY - rect.top];
+        }
+        canvas.addEventListener('mousedown', (e) => {
+          dragPoint = pos(e);
+          let mouseParticle = new Particle(dragPoint[0], dragPoint[1]);
+          let minDist = 1000000;
+          mesh.particles.forEach((p) => {
+            const dist = p.distance(mouseParticle);
+            if (dist < minDist) {
+              minDist = dist;
+              dragParticle = p;
+            }
+          });
+          dragPoint = [x, y];
+        });
+        window.addEventListener('mousemove', (e) => {
+          dragPoint = pos(e);
+        });
+        window.addEventListener('mouseup', () => dragParticle = null);
+      }
+
+      function drawMesh() {
+        const ctx = document.getElementById('canvas').getContext('2d');
+        ctx.clearRect(0, 0, 400, 400);
+        ctx.fillStyle = 'black';
+        ctx.strokeStyle = '#d5d5d5';
+        ctx.lineWidth = 1;
+        mesh.springs.forEach((s) => {
+          const p1 = mesh.particles[s.p1];
+          const p2 = mesh.particles[s.p2];
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+        });
+        mesh.particles.forEach((p) => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      function initialize() {
+        mesh = new Mesh(15, 15, 0.00001, 0.001, (i, j) => [i * 20 + 10, j * 20 + 10, 0]);
+        setupPointer();
+        setInterval(() => {
+          for (let i = 0; i < ODE_STEPS; ++i) {
+            rk4Step(mesh.particles, new Field(), 1000 / 24 / ODE_STEPS);
+            if (dragParticle) {
+              dragParticle.x = dragPoint[0];
+              dragParticle.y = dragPoint[1];
+            }
+          }
+          drawMesh();
+        }, 1000 / 24);
+      }
+
+      initialize();
+    </script>
+  </body>
+</html>
