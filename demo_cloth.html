@@ -9,7 +9,7 @@
   </head>
   <body>
     <script type="text/javascript">
-      const ODE_STEPS = 10;
+      const ODE_STEPS = 2;
 
       let mesh = null;
       const material = new THREE.MeshPhongMaterial({
@@ -24,7 +24,7 @@
           const res = mesh.forces(particles);
           
           // Gravity
-          res.forEach((f) => f[1] += 0.1);
+          res.forEach((f) => f[1] -= 1);
 
           // TODO: ball collision.
 
@@ -33,14 +33,29 @@
       }
 
       function createCloth() {
-        // TODO: compute faces here.
-        updateCloth();
+        for (let i = 1; i < mesh.rows; ++i) {
+          for (let j = 1; j < mesh.cols; ++j) {
+            geometry.faces.push(new THREE.Face3(
+              mesh.index(i, j),
+              mesh.index(i - 1, j),
+              mesh.index(i - 1, j - 1),
+            ));
+            geometry.faces.push(new THREE.Face3(
+              mesh.index(i, j),
+              mesh.index(i - 1, j - 1),
+              mesh.index(i, j - 1),
+            ));
+          }
+        }
+        geometry.vertices = mesh.particles.map((p) => new THREE.Vector3(p.x, p.y, p.z));        
         return new THREE.Mesh(geometry, material);
       }
 
       function updateCloth() {
-        geometry.vertices = [];
-        // TODO: recompute vertices here.
+        mesh.particles.forEach((p, i) => {
+          const vertex = geometry.vertices[i];
+          vertex.set(p.x, p.y, p.z);
+        });
         geometry.verticesNeedUpdate = true;
       }
 
@@ -51,8 +66,8 @@
       function initialize() {
         mesh = new Mesh(50, 50, 1e-5, 0.001, (i, j) => {
           const x = (i - 25) / 50;
-          const z = (i - 25) / 50 - 4;
-          return [x, -1, z];
+          const z = (j - 25) / 50 - 4;
+          return [x, 1, z];
         });
 
         const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 20);
@@ -60,18 +75,23 @@
         renderer.setSize(400, 400);
         document.body.appendChild(renderer.domElement);
 
-        const light = new THREE.PointLight(0xffffff, 1);
-        light.position.set(5, 5, 10);
         const scene = new THREE.Scene();
+        
+        let light = new THREE.PointLight(0xffffff, 1);
+        light.position.set(5, 10, 10);
+        scene.add(light);
+        light = new THREE.PointLight(0xffffff, 1);
+        light.position.set(5, -10, 10);
         scene.add(light);
 
         scene.add(createCloth());
-        scene.add(createBall());
+        //scene.add(createBall());
 
         setInterval(() => {
           for (let i = 0; i < ODE_STEPS; ++i) {
-            rk4Step(mesh.particles, new Field(), 1000 / 24 / ODE_STEPS);
+            rk4Step(mesh.particles, new Field(), 1 / 24 / ODE_STEPS);
           }
+          updateCloth();
           renderer.render(scene, camera);
         }, 1000/24);
       }
