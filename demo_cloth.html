@@ -10,6 +10,8 @@
   <body>
     <script type="text/javascript">
       const ODE_STEPS = 2;
+      const COLLISION_FORCE = 100;
+      const GRANULARITY = 50;
 
       let mesh = null;
       const material = new THREE.MeshPhongMaterial({
@@ -34,7 +36,7 @@
             force.sub(ballCenter);
             if (force.length() < ballRadius) {
               force.normalize();
-              force.setLength(100);
+              force.setLength(COLLISION_FORCE);
               res[i][0] += force.x;
               res[i][1] += force.y;
               res[i][2] += force.z;
@@ -85,24 +87,24 @@
       }
 
       function initialize() {
-        mesh = new Mesh(50, 50, 1e-1, 0.1, (i, j) => {
-          const x = (i - 25) / 50;
-          const z = (j - 25) / 50 - 4;
+        mesh = new Mesh(GRANULARITY, GRANULARITY, 2000, 0.2, (i, j) => {
+          const x = (i - (GRANULARITY - 1) / 2) / (GRANULARITY - 1);
+          const z = (j - (GRANULARITY - 1) / 2) / (GRANULARITY - 1) - 4;
           return [x, 1, z];
         });
 
         const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 20);
         const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(400, 400);
+        renderer.setSize(600, 600);
         document.body.appendChild(renderer.domElement);
 
         const scene = new THREE.Scene();
         
         let light = new THREE.PointLight(0xffffff, 1);
-        light.position.set(5, 10, 10);
+        light.position.set(0, 10, 10);
         scene.add(light);
         light = new THREE.PointLight(0xffffff, 1);
-        light.position.set(5, -10, 10);
+        light.position.set(0, -10, 10);
         scene.add(light);
 
         scene.add(createCloth());
@@ -110,11 +112,11 @@
 
         setInterval(() => {
           for (let i = 0; i < ODE_STEPS; ++i) {
-            rk4Step(mesh.particles, new Field(), 1 / 24 / ODE_STEPS);
+            rk4Step(mesh.particles, new Field(), 1 / 60 / ODE_STEPS);
           }
           updateCloth();
           renderer.render(scene, camera);
-        }, 1000/24);
+        }, 1000/60);
       }
 
       initialize();
