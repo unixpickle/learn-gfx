@@ -26,7 +26,20 @@
           // Gravity
           res.forEach((f) => f[1] -= 1);
 
-          // TODO: ball collision.
+          // Ball collision:
+          const ballCenter = new THREE.Vector3(0, 0, -4);
+          const ballRadius = 0.25;
+          particles.forEach((p, i) => {
+            const force = new THREE.Vector3(p.x, p.y, p.z);
+            force.sub(ballCenter);
+            if (force.length() < ballRadius) {
+              force.normalize();
+              force.setLength(100);
+              res[i][0] += force.x;
+              res[i][1] += force.y;
+              res[i][2] += force.z;
+            }
+          });
 
           return res;
         }
@@ -60,11 +73,19 @@
       }
 
       function createBall() {
-        // TODO: this.
+        const material = new THREE.MeshPhongMaterial({
+          color: 0x65bcd4,
+          side: THREE.DoubleSide,
+          flatShading: true,
+        });
+        const geometry = new THREE.SphereGeometry(0.25, 32, 32);
+        const res = new THREE.Mesh(geometry, material);
+        res.position.set(0, 0, -5);
+        return res;
       }
 
       function initialize() {
-        mesh = new Mesh(50, 50, 1e-5, 0.001, (i, j) => {
+        mesh = new Mesh(50, 50, 1e-1, 0.1, (i, j) => {
           const x = (i - 25) / 50;
           const z = (j - 25) / 50 - 4;
           return [x, 1, z];
@@ -85,7 +106,7 @@
         scene.add(light);
 
         scene.add(createCloth());
-        //scene.add(createBall());
+        scene.add(createBall());
 
         setInterval(() => {
           for (let i = 0; i < ODE_STEPS; ++i) {
