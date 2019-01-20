@@ -11,11 +11,9 @@
       function smoothedMesh() {
         const initVecs = vertices();
         let smoothed = initVecs;
-        const start = new Date().getTime();
         for (let i = 0; i < 2; ++i) {
           smoothed = loopSubdivision(smoothed);
         }
-        console.log(new Date().getTime() - start);
         const geometry = new THREE.Geometry();
         for (let i = 0; i < smoothed.length; i += 3) {
           geometry.faces.push(new THREE.Face3(i + 2, i + 1, i));
