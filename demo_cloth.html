@@ -21,7 +21,7 @@
       });
       const geometry = new THREE.Geometry();
 
-      class Field {
+      class Field extends ForceField {
         forces(particles) {
           const res = mesh.forces(particles);
           

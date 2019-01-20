@@ -6,8 +6,9 @@ class Spring {
   }
 }
 
-class Mesh {
+class Mesh extends ForceField {
   constructor(rows, cols, k, damping, posFn) {
+    super();
     this.rows = rows;
     this.cols = cols;
     this.k = k;

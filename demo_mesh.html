@@ -15,7 +15,7 @@
       let dragParticle = null;
       let dragPoint = [0, 0];
 
-      class Field {
+      class Field extends ForceField {
         forces(particles) {
           const res = mesh.forces(particles);
           if (dragParticle) {
