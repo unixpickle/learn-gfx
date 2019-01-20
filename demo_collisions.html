@@ -10,10 +10,11 @@
     <br>
     <canvas width="400" height="400" id="canvas">Upgrade your browser.</canvas>
     <script type="text/javascript">
-      const GRAVITY = 10;
-      const COLLISION_POWER = 1000;
-      const NUM_BALLS = 15;
-      const ODE_STEPS = 20;
+      const GRAVITY = 100;
+      const COLLISION_POWER = 2000;
+      const NUM_BALLS = 50;
+      const ODE_STEPS = 30;
+      const DAMPING = 0.5;
 
       class Ball extends Particle {
         constructor(radius, x, y) {
@@ -67,6 +68,9 @@
               force[1] += COLLISION_POWER;
             }
             force[1] += GRAVITY;
+            force[0] -= DAMPING * p.vx;
+            force[1] -= DAMPING * p.vy;
+            force[2] -= DAMPING * p.vz;
             return force;
           });
         }
@@ -86,7 +90,7 @@
 
         let totalEnergy = 0;
         particles.forEach((p) => totalEnergy += p.energy());
-        particles.forEach((p) => totalEnergy += GRAVITY * (400 - p.y));
+        particles.forEach((p) => totalEnergy += GRAVITY * (385 - p.y));
         rollingEnergy.add(totalEnergy);
         document.getElementById('energy').textContent = Math.ceil(rollingEnergy.value);
       }
