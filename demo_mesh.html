@@ -72,11 +72,11 @@
       }
 
       function initialize() {
-        mesh = new Mesh(15, 15, 0.00001, 0.001, (i, j) => [i * 20 + 10, j * 20 + 10, 0]);
+        mesh = new Mesh(15, 15, 30, 1, (i, j) => [i * 20 + 10, j * 20 + 10, 0]);
         setupPointer();
         setInterval(() => {
           for (let i = 0; i < ODE_STEPS; ++i) {
-            rk4Step(mesh.particles, new Field(), 1000 / 24 / ODE_STEPS);
+            rk4Step(mesh.particles, new Field(), 1 / 24 / ODE_STEPS);
             if (dragParticle) {
               dragParticle.x = dragPoint[0];
               dragParticle.y = dragPoint[1];
