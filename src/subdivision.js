@@ -138,9 +138,14 @@ function midpoint3D(p1, p2) {
 }
 
 function containsPoint(shape, p) {
-  return shape.filter((p1) => pointsEqual(p, p1)).length > 0;
+  for (let i = 0; i < shape.length; ++i) {
+    if (pointsEqual(shape[i], p)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function pointsEqual(p1, p2) {
-  return ('' + p1) === ('' + p2);
+  return p1[0] === p2[0] && p1[1] === p2[1] && p1[2] === p2[2];
 }
