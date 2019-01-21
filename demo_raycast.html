@@ -11,12 +11,12 @@
     <canvas id="canvas" width="200" height="200"></canvas>
     <script type="text/javascript">
       function createObjects() {
-        const res = [];
         const vertices = monkeyVertices().map((x) => new THREE.Vector3(x[0], x[1] - 0.3, x[2] - 2));
+        const triangles = [];
         for (let i = 0; i < vertices.length; i += 3) {
-          res.push(new TriangleRayObject(vertices[i], vertices[i + 1], vertices[i + 2]));
+          triangles.push(new TriangleRayObject(vertices[i], vertices[i + 1], vertices[i + 2]));
         }
-        return res;
+        return [new MeshRayObject(triangles)];
       }
 
       function initialize() {
@@ -30,6 +30,7 @@
         const rays = camera.rayGrid();
         const lightRay = new THREE.Vector3(0, 0, -1);
         let dataIdx = 0;
+        const startTime = new Date().getTime();
         for (let y = 0; y < canvas.height; ++y) {
           for (let x = 0; x < canvas.width; ++x) {
             const ray = rays.shift();
@@ -59,7 +60,7 @@
 
         ctx.putImageData(data, 0, 0);
 
-        console.log('done');
+        console.log('done in ' + (new Date().getTime() - startTime) + ' ms');
       }
 
       initialize();

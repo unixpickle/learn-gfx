@@ -109,4 +109,90 @@ class TriangleRayObject extends RayObject {
 
     return new RayIntersection(t, this.normal);
   }
+
+  axisMin(axis) {
+    if (axis === 0) {
+      return Math.min(this.p1.x, this.p2.x, this.p3.x);
+    } else if (axis === 1) {
+      return Math.min(this.p1.y, this.p2.y, this.p3.y);
+    } else {
+      return Math.min(this.p1.z, this.p2.z, this.p3.z);
+    }
+  }
+
+  axisMax(axis) {
+    if (axis === 0) {
+      return Math.max(this.p1.x, this.p2.x, this.p3.x);
+    } else if (axis === 1) {
+      return Math.max(this.p1.y, this.p2.y, this.p3.y);
+    } else {
+      return Math.max(this.p1.z, this.p2.z, this.p3.z);
+    }
+  }
+}
+
+class MeshRayObject {
+  constructor(triangles, axis) {
+    axis = axis || 0;
+    this.triangles = triangles.slice();
+    this.triangles.sort((a, b) => a.axisMin(axis) - b.axisMin(axis));
+    if (this.triangles.length > 1) {
+      const midpoint = Math.floor(this.triangles.length / 2);
+      const newAxis = (axis + 1) % 3;
+      this.group1 = new MeshRayObject(this.triangles.slice(0, midpoint), newAxis);
+      this.group2 = new MeshRayObject(this.triangles.slice(midpoint), newAxis);
+    }
+    this.min = [0, 1, 2].map((axis) => {
+      let min = this.triangles[0].axisMin(axis);
+      this.triangles.forEach((t) => min = Math.min(min, t.axisMin(axis)));
+      return min;
+    });
+    this.max = [0, 1, 2].map((axis) => {
+      let max = this.triangles[0].axisMax(axis);
+      this.triangles.forEach((t) => max = Math.max(max, t.axisMax(axis)));
+      return max;
+    });
+  }
+
+  intersection(ray) {
+    if (!this.boxIntersects(ray)) {
+      return null;
+    }
+    if (this.triangles.length === 1) {
+      return this.triangles[0].intersection(ray);
+    }
+    const isect1 = this.group1.intersection(ray);
+    const isect2 = this.group2.intersection(ray);
+    if (isect1 === null) {
+      return isect2;
+    } else if (isect2 === null) {
+      return isect1;
+    } else if (isect1.distance < isect2.distance) {
+      return isect1;
+    } else {
+      return isect2;
+    }
+  }
+
+  boxIntersects(ray) {
+    const xRange = this.boxAxisRange(0, ray.origin.x, ray.direction.x);
+    const yRange = this.boxAxisRange(1, ray.origin.y, ray.direction.y);
+    const zRange = this.boxAxisRange(2, ray.origin.z, ray.direction.z);
+    const min = Math.max(xRange[0], yRange[0], zRange[0]);
+    const max = Math.min(xRange[1], yRange[1], zRange[1]);
+    return max >= min;
+  }
+
+  boxAxisRange(axis, rayOrigin, rayDirection) {
+    if (Math.abs(rayDirection) < 1e-8) {
+      if (rayOrigin >= this.min[axis] && rayOrigin <= this.max[axis]) {
+        return [-Infinity, Infinity];
+      } else {
+        return [-Infinity, -Infinity];
+      }
+    }
+    const t1 = (this.min[axis] - rayOrigin) / rayDirection;
+    const t2 = (this.max[axis] - rayOrigin) / rayDirection;
+    return [Math.min(t1, t2), Math.max(t1, t2)];
+  }
 }
