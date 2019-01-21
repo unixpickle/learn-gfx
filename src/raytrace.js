@@ -100,11 +100,8 @@ class TriangleRayObject extends RayObject {
       return null;
     }
 
-    direction.multiplyScalar(t);
-    origin.add(direction);
-    const a = origin.x;
-    const b = origin.y;
-
+    const a = origin.x + t * direction.x;
+    const b = origin.y + t * direction.y;
     if (a < 0 || b < 0 || a + b > 1) {
       // Outside of the triangle.
       return null;
