@@ -30,7 +30,7 @@ class FrustumRayCamera extends RayCamera {
     const origin = new THREE.Vector3(0, 0, 0);
     const result = [];
     for (let y = 0; y < this.height; ++y) {
-      const yDelta = maxY * (y - this.height / 2) / (this.height / 2);
+      const yDelta = -maxY * (y - this.height / 2) / (this.height / 2);
       for (let x = 0; x < this.width; ++x) {
         const xDelta = maxX * (x - this.width / 2) / (this.width / 2);
         const direction = new THREE.Vector3(xDelta, yDelta, -1);

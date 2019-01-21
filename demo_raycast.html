@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Ray Casting Demo</title>
+    <script src="deps/three.min.js"></script>
+    <script src="src/raytrace.js"></script>
+    <script src="src/monkey.js"></script>
+  </head>
+  <body>
+    <canvas id="canvas" width="200" height="200"></canvas>
+    <script type="text/javascript">
+      function createObjects() {
+        const res = [];
+        const vertices = monkeyVertices().map((x) => new THREE.Vector3(x[0], x[1] - 0.3, x[2] - 2));
+        for (let i = 0; i < vertices.length; i += 3) {
+          res.push(new TriangleRayObject(vertices[i], vertices[i + 1], vertices[i + 2]));
+        }
+        return res;
+      }
+
+      function initialize() {
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const data = ctx.createImageData(canvas.width, canvas.height);
+        
+        const camera = new FrustumRayCamera(canvas.width, canvas.height, Math.PI / 2);
+        const objects = createObjects();
+
+        const rays = camera.rayGrid();
+        const lightRay = new THREE.Vector3(0, 0, -1);
+        let dataIdx = 0;
+        for (let y = 0; y < canvas.height; ++y) {
+          for (let x = 0; x < canvas.width; ++x) {
+            const ray = rays.shift();
+            let closest = null;
+            let normal = null;
+            objects.forEach((obj) => {
+              const intersection = obj.intersection(ray);
+              if (intersection !== null && (closest === null || intersection.distance < closest)) {
+                closest = intersection.distance;
+                normal = intersection.normal;
+              }
+            });
+            if (closest !== null) {
+              const color = Math.floor(255 * Math.abs(lightRay.dot(normal)));
+              for (let i = 0; i < 3; ++i) {
+                data.data[dataIdx++] = color;
+              }
+              data.data[dataIdx++] = 255;
+            } else {
+              for (let i = 0; i < 3; ++i) {
+                data.data[dataIdx++] = 0;
+              }
+              data.data[dataIdx++] = 255;
+            }
+          }
+        }
+
+        ctx.putImageData(data, 0, 0);
+
+        console.log('done');
+      }
+
+      initialize();
+    </script>
+  </body>
+</html>
