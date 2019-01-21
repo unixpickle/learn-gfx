@@ -155,11 +155,10 @@ class MeshRayObject {
   }
 
   intersection(ray) {
-    if (!this.boxIntersects(ray)) {
-      return null;
-    }
     if (this.triangles.length === 1) {
       return this.triangles[0].intersection(ray);
+    } else if (!this.boxIntersects(ray)) {
+      return null;
     }
     const isect1 = this.group1.intersection(ray);
     const isect2 = this.group2.intersection(ray);
@@ -178,21 +177,25 @@ class MeshRayObject {
     const xRange = this.boxAxisRange(0, ray.origin.x, ray.direction.x);
     const yRange = this.boxAxisRange(1, ray.origin.y, ray.direction.y);
     const zRange = this.boxAxisRange(2, ray.origin.z, ray.direction.z);
-    const min = Math.max(xRange[0], yRange[0], zRange[0]);
-    const max = Math.min(xRange[1], yRange[1], zRange[1]);
+    const min = Math.max(xRange.min, yRange.min, zRange.min);
+    const max = Math.min(xRange.max, yRange.max, zRange.max);
     return max >= min;
   }
 
   boxAxisRange(axis, rayOrigin, rayDirection) {
     if (Math.abs(rayDirection) < 1e-8) {
       if (rayOrigin >= this.min[axis] && rayOrigin <= this.max[axis]) {
-        return [-Infinity, Infinity];
+        return { min: -Infinity, max: Infinity };
       } else {
-        return [-Infinity, -Infinity];
+        return { min: -Infinity, max: -Infinity };
       }
     }
     const t1 = (this.min[axis] - rayOrigin) / rayDirection;
     const t2 = (this.max[axis] - rayOrigin) / rayDirection;
-    return [Math.min(t1, t2), Math.max(t1, t2)];
+    if (t1 < t2) {
+      return { min: t1, max: t2 };
+    } else {
+      return { min: t2, max: t1 };
+    }
   }
 }
