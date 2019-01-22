@@ -194,3 +194,44 @@ class MeshRayObject {
     }
   }
 }
+
+class TransformRayObject {
+  constructor(object, matrix) {
+    this.object = object;
+    this.setMatrix(matrix);
+  }
+
+  static translate(object, x, y, z) {
+    const transform = new THREE.Matrix4();
+    transform.makeTranslation(x, y, z);
+    return new TransformRayObject(object, transform);
+  }
+
+  static rotate(object, x, y, z) {
+    const transform = new THREE.Matrix4();
+    transform.makeRotationFromEuler(new THREE.Euler(x, y, z, 'XYZ'));
+    return new TransformRayObject(object, transform);
+  }
+
+  setMatrix(matrix) {
+    this.matrix = matrix;
+    this.normalMatrix = new THREE.Matrix3();
+    this.normalMatrix.getNormalMatrix(this.matrix);
+    this.rayMatrix = this.normalMatrix.clone();
+    this.rayMatrix.transpose();
+    this.rayPosMatrix = new THREE.Matrix4();
+    this.rayPosMatrix.getInverse(this.matrix);
+  }
+
+  intersection(ray) {
+    const newRay = new Ray(ray.origin.clone(), ray.direction.clone());
+    newRay.origin.applyMatrix4(this.rayPosMatrix);
+    newRay.direction.applyMatrix3(this.rayMatrix);
+    const result = this.object.intersection(newRay);
+    if (result !== null) {
+      result.normal = result.normal.clone();
+      result.normal.applyMatrix3(this.normalMatrix);
+    }
+    return result;
+  }
+}
