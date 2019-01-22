@@ -141,17 +141,12 @@ class MeshRayObject {
       const newAxis = (axis + 1) % 3;
       this.group1 = new MeshRayObject(this.triangles.slice(0, midpoint), newAxis);
       this.group2 = new MeshRayObject(this.triangles.slice(midpoint), newAxis);
+      this.min = this.group1.min.map((x, i) => Math.min(x, this.group2.min[i]));
+      this.max = this.group1.max.map((x, i) => Math.max(x, this.group2.max[i]));
+    } else {
+      this.min = [0, 1, 2].map((axis) => this.triangles[0].axisMin(axis));
+      this.max = [0, 1, 2].map((axis) => this.triangles[0].axisMax(axis));
     }
-    this.min = [0, 1, 2].map((axis) => {
-      let min = this.triangles[0].axisMin(axis);
-      this.triangles.forEach((t) => min = Math.min(min, t.axisMin(axis)));
-      return min;
-    });
-    this.max = [0, 1, 2].map((axis) => {
-      let max = this.triangles[0].axisMax(axis);
-      this.triangles.forEach((t) => max = Math.max(max, t.axisMax(axis)));
-      return max;
-    });
   }
 
   intersection(ray) {
