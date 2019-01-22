@@ -231,6 +231,7 @@ class TransformRayObject {
     if (result !== null) {
       result.normal = result.normal.clone();
       result.normal.applyMatrix3(this.normalMatrix);
+      result.normal.normalize();
     }
     return result;
   }
