@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <title>Ray Casting Demo</title>
     <script src="deps/three.min.js"></script>
+    <script src="src/subdivision.js"></script>
     <script src="src/raytrace.js"></script>
     <script src="src/monkey.js"></script>
   </head>
@@ -11,7 +12,11 @@
     <canvas id="canvas" width="200" height="200"></canvas>
     <script type="text/javascript">
       function createObjects() {
-        const vertices = monkeyVertices().map((x) => new THREE.Vector3(x[0], x[1] - 0.3, x[2] - 2));
+        let vertices = monkeyVertices();
+        for (let i = 0; i < 2; ++i) {
+          vertices = loopSubdivision(vertices);
+        }
+        vertices = vertices.map((x) => new THREE.Vector3(x[0], x[1] - 0.3, x[2] - 2));
         const triangles = [];
         for (let i = 0; i < vertices.length; i += 3) {
           triangles.push(new TriangleRayObject(vertices[i], vertices[i + 1], vertices[i + 2]));
