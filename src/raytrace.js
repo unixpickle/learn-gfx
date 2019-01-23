@@ -169,29 +169,25 @@ class MeshRayObject {
   }
 
   boxIntersects(ray) {
-    const xRange = this.boxAxisRange(0, ray.origin.x, ray.direction.x);
-    const yRange = this.boxAxisRange(1, ray.origin.y, ray.direction.y);
-    const zRange = this.boxAxisRange(2, ray.origin.z, ray.direction.z);
-    const min = Math.max(xRange.min, yRange.min, zRange.min);
-    const max = Math.min(xRange.max, yRange.max, zRange.max);
-    return max >= min;
-  }
-
-  boxAxisRange(axis, rayOrigin, rayDirection) {
-    if (Math.abs(rayDirection) < 1e-8) {
-      if (rayOrigin >= this.min[axis] && rayOrigin <= this.max[axis]) {
-        return { min: -Infinity, max: Infinity };
+    let min = -Infinity;
+    let max = Infinity;
+    const origin = [ray.origin.x, ray.origin.y, ray.origin.z];
+    const direction = [ray.direction.x, ray.direction.y, ray.direction.z];
+    for (let axis = 0; axis < 3; ++axis) {
+      const rayOrigin = origin[axis];
+      const rayDirection = direction[axis];
+      if (Math.abs(rayDirection) < 1e-8) {
+        if (rayOrigin < this.min[axis] || rayOrigin > this.max[axis]) {
+          return false;
+        }
       } else {
-        return { min: -Infinity, max: -Infinity };
+        const t1 = (this.min[axis] - rayOrigin) / rayDirection;
+        const t2 = (this.max[axis] - rayOrigin) / rayDirection;
+        min = Math.max(min, Math.min(t1, t2));
+        max = Math.min(max, Math.max(t1, t2));
       }
     }
-    const t1 = (this.min[axis] - rayOrigin) / rayDirection;
-    const t2 = (this.max[axis] - rayOrigin) / rayDirection;
-    if (t1 < t2) {
-      return { min: t1, max: t2 };
-    } else {
-      return { min: t2, max: t1 };
-    }
+    return max >= min;
   }
 }
 

@@ -27,6 +27,7 @@
       }
 
       function drawObject(angle) {
+        const start = new Date().getTime();
         let transformed = TransformRayObject.rotate(object, angle, angle, angle);
         transformed = TransformRayObject.translate(transformed, 0, -0.3, -2.0);
 
@@ -58,6 +59,7 @@
           }
         }
         ctx.putImageData(data, 0, 0);
+        console.log('took', new Date().getTime() - start);
       }
 
       function initialize() {
