@@ -36,7 +36,9 @@
         
         const camera = new FrustumRayCamera(canvas.width, canvas.height, Math.PI / 2);
         const rays = camera.rayGrid();
-        const lightRay = new THREE.Vector3(0, 0, -1);
+
+        const light = new THREE.Vector3(0, 0, 0);
+        const material = new LambertRayMaterial([0xff, 0xff, 0xff]);
 
         let dataIdx = 0;
         for (let y = 0; y < canvas.height; ++y) {
@@ -44,9 +46,9 @@
             const ray = rays.shift();
             const intersection = transformed.intersection(ray);
             if (intersection !== null) {
-              const color = Math.floor(255 * Math.abs(lightRay.dot(intersection.normal)));
+              const color = material.color(ray, intersection, light);
               for (let i = 0; i < 3; ++i) {
-                data.data[dataIdx++] = color;
+                data.data[dataIdx++] = color[i];
               }
               data.data[dataIdx++] = 255;
             } else {

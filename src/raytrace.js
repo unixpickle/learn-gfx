@@ -47,6 +47,13 @@ class RayIntersection {
     this.distance = distance;
     this.normal = normal;
   }
+
+  point(ray) {
+    const result = ray.direction.clone();
+    result.multiplyScalar(this.distance);
+    result.add(ray.origin);
+    return result;
+  }
 }
 
 class RayObject {
@@ -230,5 +237,26 @@ class TransformRayObject {
       result.normal.normalize();
     }
     return result;
+  }
+}
+
+class RayMaterial {
+  color(ray, intersection, light) {
+    throw new Error('not implemented');
+  }
+}
+
+class LambertRayMaterial extends RayMaterial {
+  constructor(color) {
+    super();
+    this._color = color;
+  }
+
+  color(ray, intersection, light) {
+    const offset = intersection.point(ray);
+    offset.sub(light);
+    offset.normalize();
+    const brightness = offset.dot(intersection.normal);
+    return this._color.map((x) => Math.max(0, Math.round(-x * brightness)));
   }
 }
