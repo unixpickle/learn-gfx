@@ -38,7 +38,7 @@
         const rays = camera.rayGrid();
 
         const light = new THREE.Vector3(0, 0, 0);
-        const material = new LambertRayMaterial([0xff, 0xff, 0xff]);
+        const material = new PhongRayMaterial([0xff, 0xff, 0xff], 0.2);
 
         let dataIdx = 0;
         for (let y = 0; y < canvas.height; ++y) {

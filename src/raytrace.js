@@ -260,3 +260,25 @@ class LambertRayMaterial extends RayMaterial {
     return this._color.map((x) => Math.max(0, Math.round(-x * brightness)));
   }
 }
+
+class PhongRayMaterial extends RayMaterial {
+  constructor(color, power) {
+    super();
+    this._color = color;
+    this._power = power || 1;
+  }
+
+  color(ray, intersection, light) {
+    const reflection = intersection.point(ray);
+    reflection.sub(light);
+    reflection.reflect(intersection.normal);
+    reflection.normalize();
+
+    const rayDir = ray.direction.clone();
+    rayDir.normalize();
+
+    const brightness = reflection.dot(intersection.normal) *
+      Math.pow(Math.abs(reflection.dot(rayDir)), this._power);
+    return this._color.map((x) => Math.max(0, Math.round(x * brightness)));
+  }
+}
