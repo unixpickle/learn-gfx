@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Texturing Demo</title>
+    <script src="deps/three.min.js"></script>
+    <script src="src/raytrace.js"></script>
+    <script src="src/physics.js"></script>
+    <script src="src/mesh.js"></script>
+  </head>
+  <body>
+    <canvas id="canvas" width="200" height="200" style="width: 200px; height: 200px;"></canvas>
+    <script type="text/javascript">
+      const ODE_STEPS = 40;
+      const COLLISION_FORCE = 100;
+      const GRANULARITY = 50;
+
+      let mesh = null;
+      let texture = null;
+
+      class Field extends ForceField {
+        forces(particles) {
+          const res = mesh.forces(particles);
+
+          // Gravity
+          res.forEach((f) => f[1] -= 1);
+
+          // Ball collision:
+          const ballCenter = new THREE.Vector3(0, 0, -4);
+          const ballRadius = 0.25;
+          particles.forEach((p, i) => {
+            const force = new THREE.Vector3(p.x, p.y, p.z);
+            force.sub(ballCenter);
+            if (force.length() < ballRadius) {
+              force.normalize();
+              force.setLength(COLLISION_FORCE);
+              res[i][0] += force.x;
+              res[i][1] += force.y;
+              res[i][2] += force.z;
+            }
+          });
+
+          return res;
+        }
+      }
+
+      function renderScene() {
+        const uvs = [];
+        for (let i = 1; i < mesh.rows; ++i) {
+          for (let j = 1; j < mesh.cols; ++j) {
+            uvs.push([[i - 1, j - 1], [i - 1, j], [i, j]]);
+            uvs.push([[i, j - 1], [i - 1, j - 1], [i, j]]);
+          }
+        }
+        const triangles = [];
+        uvs.forEach((triangleUVs) => {
+          const indices = triangleUVs.map((uv) => mesh.index(uv[0], uv[1]));
+          const points = indices.map((i) => {
+            const p = mesh.particles[i];
+            return new THREE.Vector3(p.x, p.y, p.z);
+          });
+          const normUV = triangleUVs.map((uv) => uv.map((x) => x * 512 / GRANULARITY));
+          triangles.push(new TexturedRayObject(points[0], points[1], points[2], texture,
+            normUV[0], normUV[1], normUV[2]));
+        });
+
+        const canvas = document.getElementById('canvas');
+        const object = new MeshRayObject(triangles);
+        const camera = new FrustumRayCamera(canvas.width, canvas.height, Math.PI / 4);
+        const light = new THREE.Vector3(0, 10, 10);
+        const material = new TextureRayMaterial(new LambertRayMaterial([0xff, 0xff, 0xff]));
+
+        camera.render(canvas, light, object, material);
+      }
+
+      function textureLoaded(img) {
+        texture = new RayTexture(img);
+        mesh = new Mesh(GRANULARITY, GRANULARITY, 2000, 0.2, (i, j) => {
+          const x = (i - (GRANULARITY - 1) / 2) / (GRANULARITY - 1);
+          const z = (j - (GRANULARITY - 1) / 2) / (GRANULARITY - 1) - 4;
+          return [x, 1, z];
+        });
+
+        setInterval(() => {
+          for (let i = 0; i < ODE_STEPS; ++i) {
+            rk4Step(mesh.particles, new Field(), 0.5 / ODE_STEPS);
+          }
+          renderScene();
+        }, 500);
+      }
+
+      function initialize() {
+        const img = document.createElement('img');
+        img.onload = () => textureLoaded(img);
+        img.src = 'img/rug.jpg';
+      }
+
+      initialize();
+    </script>
+  </body>
+</html>

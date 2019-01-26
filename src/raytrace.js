@@ -15,6 +15,33 @@ class RayCamera {
   rayGrid() {
     throw new Error('not implemented');
   }
+
+  // Render the scene to a canvas.
+  render(canvas, light, object, material) {
+    const ctx = canvas.getContext('2d');
+    const data = ctx.createImageData(canvas.width, canvas.height);
+    const rays = this.rayGrid();
+    let dataIdx = 0;
+    for (let y = 0; y < canvas.height; ++y) {
+      for (let x = 0; x < canvas.width; ++x) {
+        const ray = rays.shift();
+        const intersection = object.intersection(ray);
+        if (intersection !== null) {
+          const color = material.color(ray, intersection, light);
+          for (let i = 0; i < 3; ++i) {
+            data.data[dataIdx++] = color[i];
+          }
+          data.data[dataIdx++] = 255;
+        } else {
+          for (let i = 0; i < 3; ++i) {
+            data.data[dataIdx++] = 0;
+          }
+          data.data[dataIdx++] = 255;
+        }
+      }
+    }
+    ctx.putImageData(data, 0, 0);
+  }
 }
 
 class FrustumRayCamera extends RayCamera {
@@ -143,6 +170,34 @@ class TriangleRayObject extends RayObject {
     } else {
       return Math.max(this.p1.z, this.p2.z, this.p3.z);
     }
+  }
+}
+
+class RayTexture {
+  constructor(img) {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    this.data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  }
+
+  colorAt(u, v) {
+    const x = Math.max(0, Math.min(this.data.width - 1, Math.floor(u)));
+    const y = Math.max(0, Math.min(this.data.height - 1, Math.floor(v)));
+    const idx = 4 * (x + y * this.data.width);
+    return [this.data.data[idx], this.data.data[idx + 1], this.data.data[idx + 2]];
+  }
+}
+
+class TexturedRayObject extends TriangleRayObject {
+  constructor(p1, p2, p3, texture, uv1, uv2, uv3) {
+    super(p1, p2, p3);
+    this.texture = texture;
+    this.uv1 = uv1;
+    this.uv2 = uv2;
+    this.uv3 = uv3;
   }
 }
 
@@ -288,5 +343,29 @@ class PhongRayMaterial extends RayMaterial {
     const brightness = reflection.dot(intersection.normal) *
       Math.pow(Math.abs(reflection.dot(rayDir)), this._power);
     return this._color.map((x) => Math.max(0, Math.round(x * brightness)));
+  }
+}
+
+class TextureRayMaterial extends RayMaterial {
+  constructor(maskMaterial) {
+    super();
+    this.maskMaterial = maskMaterial;
+  }
+
+  color(ray, intersection, light) {
+    const mask = this.maskMaterial.color(ray, intersection, light);
+    const barycentric = intersection.barycentric;
+    const object = intersection.object;
+
+    let u = 0;
+    let v = 0;
+    const uvs = [object.uv1, object.uv2, object.uv3];
+    for (let i = 0; i < 3; ++i) {
+      u += barycentric[i] * uvs[i][0];
+      v += barycentric[i] * uvs[i][1];
+    }
+
+    const color = intersection.object.texture.colorAt(u, v);
+    return color.map((x, i) => Math.round(x * mask[i] / 255));
   }
 }
