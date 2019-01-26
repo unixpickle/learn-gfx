@@ -43,7 +43,8 @@ class FrustumRayCamera extends RayCamera {
 }
 
 class RayIntersection {
-  constructor(distance, normal) {
+  constructor(object, distance, normal) {
+    this.object = object;
     this.distance = distance;
     this.normal = normal;
   }
@@ -53,6 +54,13 @@ class RayIntersection {
     result.multiplyScalar(this.distance);
     result.add(ray.origin);
     return result;
+  }
+}
+
+class TriangleRayIntersection extends RayIntersection {
+  constructor(object, distance, normal, barycentric) {
+    super(object, distance, normal);
+    this.barycentric = barycentric;
   }
 }
 
@@ -114,7 +122,7 @@ class TriangleRayObject extends RayObject {
       return null;
     }
 
-    return new RayIntersection(t, this.normal);
+    return new TriangleRayIntersection(this, t, this.normal, [1 - a - b, a, b]);
   }
 
   axisMin(axis) {
