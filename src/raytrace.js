@@ -17,7 +17,7 @@ class RayCamera {
   }
 
   // Render the scene to a canvas.
-  render(canvas, light, object, material) {
+  render(canvas, lights, objects, materials) {
     const ctx = canvas.getContext('2d');
     const data = ctx.createImageData(canvas.width, canvas.height);
     const rays = this.rayGrid();
@@ -25,19 +25,30 @@ class RayCamera {
     for (let y = 0; y < canvas.height; ++y) {
       for (let x = 0; x < canvas.width; ++x) {
         const ray = rays.shift();
-        const intersection = object.intersection(ray);
+        let intersection = null;
+        let material = null;
+        objects.forEach((obj, i) => {
+          const x = obj.intersection(ray);
+          if (x !== null) {
+            if (intersection === null || x.distance < intersection.distance) {
+              intersection = x;
+              material = materials[i];
+            }
+          }
+        });
+        let color = [0, 0, 0];
         if (intersection !== null) {
-          const color = material.color(ray, intersection, light);
-          for (let i = 0; i < 3; ++i) {
-            data.data[dataIdx++] = color[i];
-          }
-          data.data[dataIdx++] = 255;
-        } else {
-          for (let i = 0; i < 3; ++i) {
-            data.data[dataIdx++] = 0;
-          }
-          data.data[dataIdx++] = 255;
+          lights.forEach((light) => {
+            const c = material.color(ray, intersection, light);
+            for (let i = 0; i < 3; ++i) {
+              color[i] = Math.min(255, color[i] + c[i]);
+            }
+          });
         }
+        for (let i = 0; i < 3; ++i) {
+          data.data[dataIdx++] = color[i];
+        }
+        data.data[dataIdx++] = 255;
       }
     }
     ctx.putImageData(data, 0, 0);

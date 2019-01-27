@@ -33,7 +33,7 @@
         const camera = new FrustumRayCamera(canvas.width, canvas.height, Math.PI / 2);
         const light = new THREE.Vector3(0, 0, 0);
         const material = new PhongRayMaterial([0xff, 0xff, 0xff], 0.2);
-        camera.render(canvas, light, transformed, material);
+        camera.render(canvas, [light], [transformed], [material]);
       }
 
       function initialize() {
