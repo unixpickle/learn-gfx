@@ -34,11 +34,12 @@
         const canvas = document.getElementById('canvas');
         const viewport = new RastViewport(canvas.width, canvas.height);
         const framebuffer = new RastFramebuffer(canvas.width, canvas.height);
+
+        const material = new LambertRastMaterial([0xff, 0xff, 0xff]);
+        const light = new THREE.Vector3(0, 0, -1);
+
         createTriangles(matrix2).forEach((triangle) => {
-          triangle.fragments(viewport, (x, y, depth) => {
-            const color = Math.round(255 * Math.abs(triangle.normal().z));
-            framebuffer.addPixel(x, y, color, color, color, depth);
-          });
+          triangle.render(viewport, framebuffer, material, [light]);
         });
         framebuffer.toCanvas(canvas);
       }

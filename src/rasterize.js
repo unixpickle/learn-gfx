@@ -69,6 +69,22 @@ class RastTriangle {
     this.p3.applyMatrix4(matrix);
   }
 
+  // Render the triangle to the framebuffer.
+  render(vp, fb, material, lights) {
+    const normal = this.normal();
+    this.fragments(vp, (x, y, point) => {
+      const color = [0, 0, 0];
+      lights.forEach((light) => {
+        const subColor = material.color(point, normal, light);
+        for (let i = 0; i < 3; ++i) {
+          color[i] += subColor[i];
+        }
+      });
+      fb.addPixel(x, y, Math.min(color[0], 255), Math.min(color[1], 255), Math.min(color[2], 255),
+        point.z);
+    });
+  }
+
   // Compute the normal to the triangle.
   normal() {
     const v1 = this.p2.clone();
@@ -76,16 +92,16 @@ class RastTriangle {
     v1.sub(this.p1);
     v2.sub(this.p1);
 
-    const normal = v1.clone();
-    normal.cross(v2);
+    const normal = v2.clone();
+    normal.cross(v1);
     normal.normalize();
 
     return normal;
   }
 
   // Call the callback function with every x, y coordinate
-  // that the pixel touches, as well as the depth at that
-  // coordinate. Arguments are (x, y, depth).
+  // that the pixel touches, as well as the corresponding
+  // point in 3D. Arguments are (x, y, point3d).
   fragments(vp, cb) {
     const bounds = this._projBounds();
     let [minX, maxY] = vp.sceneToView(bounds.min.x, bounds.min.y);
@@ -103,7 +119,7 @@ class RastTriangle {
         if (bary[0] < 0 || bary[1] < 0 || bary[2] < 0) {
           continue;
         }
-        cb(x, y, this._baryToZ(bary));
+        cb(x, y, this._baryToPoint(bary));
       }
     }
   }
@@ -124,10 +140,13 @@ class RastTriangle {
     return { min: { x: minX, y: minY }, max: { x: maxX, y: maxY } };
   }
 
-  // Get the 3D z-axis component for the 3D barycentric
+  // Get the 3D position for the 3D barycentric
   // coordinates.
-  _baryToZ(bary) {
-    return bary[0] * this.p1.z + bary[1] * this.p2.z + bary[2] * this.p3.z;
+  _baryToPoint(bary) {
+    const result = this.p1.clone().multiplyScalar(bary[0]);
+    result.add(this.p2.clone().multiplyScalar(bary[1]));
+    result.add(this.p3.clone().multiplyScalar(bary[2]));
+    return result;
   }
 
   // Get the 3D barycentric coordinates for the projected
@@ -151,6 +170,24 @@ class RastTriangle {
     const inv = new THREE.Matrix3();
     inv.getInverse(mat);
     return [inv.elements[0], inv.elements[1], inv.elements[2]];
+  }
+}
+
+class RastMaterial {
+  color(point, normal, light) {
+    throw new Error('not implemented');
+  }
+}
+
+class LambertRastMaterial {
+  constructor(color) {
+    this._color = color;
+  }
+
+  color(point, normal, light) {
+    const brightness = light.dot(normal);
+    const scale = Math.max(0, brightness);
+    return this._color.map((c) => Math.round(c * scale));
   }
 }
 
