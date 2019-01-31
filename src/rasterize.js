@@ -162,19 +162,10 @@ class RastTriangle {
   // point.
   _projToBary(x, y) {
     const mat = new THREE.Matrix3();
-    const points = [this.p1, this.p2, this.p3];
-    const entry = (row, col) => {
-      const p = points[col];
-      if (row === 0) {
-        return p.x - x * p.z;
-      } else {
-        return p.y - y * p.z;
-      }
-    };
     mat.set(
       1, 1, 1,
-      entry(0, 0), entry(0, 1), entry(0, 2),
-      entry(1, 0), entry(1, 1), entry(1, 2),
+      this.p1.x - x * this.p1.z, this.p2.x - x * this.p2.z, this.p3.x - x * this.p3.z,
+      this.p1.y - y * this.p1.z, this.p2.y - y * this.p2.z, this.p3.y - y * this.p3.z,
     );
     const inv = new THREE.Matrix3();
     inv.getInverse(mat);
