@@ -30,7 +30,7 @@
         const matrix2 = new THREE.Matrix4();
         matrix2.makeTranslation(0, -0.3, -2.0);
         matrix2.multiply(matrix1);
-        
+
         const canvas = document.getElementById('canvas');
         const viewport = new RastViewport(canvas.width, canvas.height);
         const framebuffer = new RastFramebuffer(canvas.width, canvas.height);
