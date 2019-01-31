@@ -26,15 +26,17 @@ class RastFramebuffer {
     }
   }
 
-  addPixel(x, y, r, g, b, depth) {
+  getDepth(x, y) {
+    return this.depth[x + y * this.width];
+  }
+
+  setPixel(x, y, r, g, b, depth) {
     const idx = (x + y * this.width);
     const colorIdx = idx * 3;
-    if (this.depth[idx] < depth) {
-      this.depth[idx] = depth;
-      this.rgb[colorIdx] = r;
-      this.rgb[colorIdx + 1] = g;
-      this.rgb[colorIdx + 2] = b;
-    }
+    this.depth[idx] = depth;
+    this.rgb[colorIdx] = r;
+    this.rgb[colorIdx + 1] = g;
+    this.rgb[colorIdx + 2] = b;
   }
 
   toCanvas(canvas) {
@@ -57,6 +59,10 @@ class RastTriangle {
     this.p3 = p3;
   }
 
+  static sort(triangles) {
+    return triangles.sort((x, y) => y.p1.z - x.p1.z);
+  }
+
   // Clone the triangle.
   clone() {
     return new RastTriangle(this.p1.clone(), this.p2.clone(), this.p3.clone());
@@ -73,6 +79,9 @@ class RastTriangle {
   render(vp, fb, material, lights) {
     const normal = this.normal();
     this.fragments(vp, (x, y, point) => {
+      if (fb.getDepth(x, y) > point.z) {
+        return;
+      }
       const color = [0, 0, 0];
       lights.forEach((light) => {
         const subColor = material.color(point, normal, light);
@@ -80,7 +89,7 @@ class RastTriangle {
           color[i] += subColor[i];
         }
       });
-      fb.addPixel(x, y, Math.min(color[0], 255), Math.min(color[1], 255), Math.min(color[2], 255),
+      fb.setPixel(x, y, Math.min(color[0], 255), Math.min(color[1], 255), Math.min(color[2], 255),
         point.z);
     });
   }

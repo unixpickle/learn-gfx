@@ -21,7 +21,7 @@
           triangle.transform(matrix);
           triangles.push(triangle);
         }
-        return triangles;
+        return RastTriangle.sort(triangles);
       }
 
       function drawObject(angle) {
