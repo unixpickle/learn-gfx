@@ -161,15 +161,23 @@ class RastTriangle {
   // Get the 3D barycentric coordinates for the projected
   // point.
   _projToBary(x, y) {
-    const mat = new THREE.Matrix3();
-    mat.set(
+    const matrix = [
       1, 1, 1,
       this.p1.x - x * this.p1.z, this.p2.x - x * this.p2.z, this.p3.x - x * this.p3.z,
       this.p1.y - y * this.p1.z, this.p2.y - y * this.p2.z, this.p3.y - y * this.p3.z,
-    );
-    const inv = new THREE.Matrix3();
-    inv.getInverse(mat);
-    return [inv.elements[0], inv.elements[1], inv.elements[2]];
+    ];
+
+    // Determinant, optimized for 1 1 1 row.
+    const invDet = 1 / ((matrix[4] * matrix[8] - matrix[5] * matrix[7]) -
+      (matrix[3] * matrix[8] - matrix[5] * matrix[6]) +
+      (matrix[3] * matrix[7] - matrix[4] * matrix[6]));
+
+    // First column of the matrix inverse formula.
+    return [
+      invDet * (matrix[4] * matrix[8] - matrix[5] * matrix[7]),
+      invDet * (matrix[5] * matrix[6] - matrix[3] * matrix[8]),
+      invDet * (matrix[3] * matrix[7] - matrix[4] * matrix[6]),
+    ];
   }
 }
 
