@@ -6,11 +6,11 @@ class RastViewport {
   }
 
   sceneToView(x, y) {
-    return [x * this.scale + this.width / 2, this.height / 2 - y * this.scale];
+    return [x * this.scale + this.width / 2, y * this.scale + this.height / 2];
   }
 
   viewToScene(x, y) {
-    return [(x - this.width / 2) / this.scale, (this.height / 2 - y) / this.scale];
+    return [(x - this.width / 2) / this.scale, (y - this.height / 2) / this.scale];
   }
 }
 
@@ -113,8 +113,8 @@ class RastTriangle {
   // point in 3D. Arguments are (x, y, point3d).
   fragments(vp, cb) {
     const bounds = this._projBounds();
-    let [minX, maxY] = vp.sceneToView(bounds.min.x, bounds.min.y);
-    let [maxX, minY] = vp.sceneToView(bounds.max.x, bounds.max.y);
+    let [minX, minY] = vp.sceneToView(bounds.min.x, bounds.min.y);
+    let [maxX, maxY] = vp.sceneToView(bounds.max.x, bounds.max.y);
     for (let y = Math.floor(minY); y <= Math.ceil(maxY); ++y) {
       if (y < 0 || y >= vp.height) {
         continue;
