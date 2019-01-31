@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Rasterization Demo</title>
+    <script src="deps/three.min.js"></script>
+    <script src="src/rasterize.js"></script>
+    <script src="src/monkey.js"></script>
+  </head>
+  <body>
+    <canvas id="canvas" width="200" height="200"></canvas>
+    <script type="text/javascript">
+      let object = null;
+
+      function createTriangles(matrix) {
+        let vertices = monkeyVertices();
+        vertices = vertices.map((x) => new THREE.Vector3(x[0], x[1], x[2]));
+        const triangles = [];
+        for (let i = 0; i < vertices.length; i += 3) {
+          const triangle = new RastTriangle(vertices[i], vertices[i + 1], vertices[i + 2]);
+          triangle.transform(matrix);
+          triangles.push(triangle);
+        }
+        return triangles;
+      }
+
+      function drawObject(angle) {
+        const matrix1 = new THREE.Matrix4();
+        matrix1.makeRotationFromEuler(new THREE.Euler(angle, angle, angle, 'XYZ'));
+        const matrix2 = new THREE.Matrix4();
+        matrix2.makeTranslation(0, -0.3, -2.0);
+        matrix2.multiply(matrix1);
+        
+        const canvas = document.getElementById('canvas');
+        const viewport = new RastViewport(canvas.width, canvas.height);
+        const framebuffer = new RastFramebuffer(canvas.width, canvas.height);
+        createTriangles(matrix2).forEach((triangle) => {
+          triangle.fragments(viewport, (x, y, depth) => {
+            const color = Math.round(255 * Math.abs(triangle.normal().z));
+            framebuffer.addPixel(x, y, color, color, color, depth);
+          });
+        });
+        framebuffer.toCanvas(canvas);
+      }
+
+      function initialize() {
+        let angle = 0;
+        setInterval(() => {
+          angle += 0.025;
+          drawObject(angle);
+        }, 50);
+      }
+
+      initialize();
+    </script>
+  </body>
+</html>
