@@ -124,8 +124,8 @@ class RastTriangle {
     maxX = Math.min(Math.ceil(maxX), vp.width - 1);
     for (let y = minY; y <= maxY; ++y) {
       for (let x = minX; x <= maxX; ++x) {
-        const [sceneX, sceneY] = vp.viewToScene(x, y);
-        const bary = this._projToBary(sceneX, sceneY);
+        const view = vp.viewToScene(x, y);
+        const bary = this._projToBary(view[0], view[1]);
         if (bary[0] < 0 || bary[1] < 0 || bary[2] < 0) {
           continue;
         }
