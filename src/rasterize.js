@@ -190,8 +190,9 @@ class RastMaterial {
   }
 }
 
-class LambertRastMaterial {
+class LambertRastMaterial extends RastMaterial {
   constructor(color) {
+    super();
     this._color = color;
   }
 
@@ -202,6 +203,31 @@ class LambertRastMaterial {
       Math.round(this._color[0] * scale),
       Math.round(this._color[1] * scale),
       Math.round(this._color[2] * scale),
+    ];
+  }
+}
+
+class PhongRastMaterial extends RastMaterial {
+  constructor(color, power) {
+    super();
+    this._color = color;
+    this._power = power || 1;
+  }
+
+  color(point, normal, light) {
+    const reflection = light.clone();
+    reflection.reflect(normal);
+    reflection.normalize();
+
+    const rayDir = point.clone();
+    rayDir.normalize();
+
+    const brightness = light.dot(normal) *
+      Math.pow(Math.abs(reflection.dot(rayDir)), this._power);
+    return [
+      Math.max(0, Math.round(this._color[0] * brightness)),
+      Math.max(0, Math.round(this._color[1] * brightness)),
+      Math.max(0, Math.round(this._color[2] * brightness)),
     ];
   }
 }
