@@ -79,6 +79,9 @@ class RastTriangle {
   render(vp, fb, material, lights) {
     const normal = this.normal();
     this.fragments(vp, (x, y, point) => {
+      if (point.z > 0) {
+        return;
+      }
       if (fb.getDepth(x, y) > point.z) {
         return;
       }
