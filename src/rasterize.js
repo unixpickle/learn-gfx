@@ -198,7 +198,11 @@ class LambertRastMaterial {
   color(point, normal, light) {
     const brightness = light.dot(normal);
     const scale = Math.max(0, brightness);
-    return this._color.map((c) => Math.round(c * scale));
+    return [
+      Math.round(this._color[0] * scale),
+      Math.round(this._color[1] * scale),
+      Math.round(this._color[2] * scale),
+    ];
   }
 }
 
