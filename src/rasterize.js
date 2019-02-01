@@ -118,14 +118,12 @@ class RastTriangle {
     const bounds = this._projBounds();
     let [minX, minY] = vp.sceneToView(bounds.min.x, bounds.min.y);
     let [maxX, maxY] = vp.sceneToView(bounds.max.x, bounds.max.y);
-    for (let y = Math.floor(minY); y <= Math.ceil(maxY); ++y) {
-      if (y < 0 || y >= vp.height) {
-        continue;
-      }
-      for (let x = Math.floor(minX); x <= Math.ceil(maxX); ++x) {
-        if (x < 0 || x >= vp.height) {
-          continue;
-        }
+    minY = Math.max(0, Math.floor(minY));
+    maxY = Math.min(Math.ceil(maxY), vp.height - 1);
+    minX = Math.max(0, Math.floor(minX));
+    maxX = Math.min(Math.ceil(maxX), vp.width - 1);
+    for (let y = minY; y <= maxY; ++y) {
+      for (let x = minX; x <= maxX; ++x) {
         const [sceneX, sceneY] = vp.viewToScene(x, y);
         const bary = this._projToBary(sceneX, sceneY);
         if (bary[0] < 0 || bary[1] < 0 || bary[2] < 0) {
@@ -155,31 +153,33 @@ class RastTriangle {
   // Get the 3D position for the 3D barycentric
   // coordinates.
   _baryToPoint(bary) {
-    const result = this.p1.clone().multiplyScalar(bary[0]);
-    result.add(this.p2.clone().multiplyScalar(bary[1]));
-    result.add(this.p3.clone().multiplyScalar(bary[2]));
-    return result;
+    return new THREE.Vector3(
+      this.p1.x * bary[0] + this.p2.x * bary[1] + this.p3.x * bary[2],
+      this.p1.y * bary[0] + this.p2.y * bary[1] + this.p3.y * bary[2],
+      this.p1.z * bary[0] + this.p2.z * bary[1] + this.p3.z * bary[2],
+    );
   }
 
   // Get the 3D barycentric coordinates for the projected
   // point.
   _projToBary(x, y) {
-    const matrix = [
-      1, 1, 1,
-      this.p1.x - x * this.p1.z, this.p2.x - x * this.p2.z, this.p3.x - x * this.p3.z,
-      this.p1.y - y * this.p1.z, this.p2.y - y * this.p2.z, this.p3.y - y * this.p3.z,
-    ];
+    const matrix3 = this.p1.x - x * this.p1.z;
+    const matrix4 = this.p2.x - x * this.p2.z;
+    const matrix5 = this.p3.x - x * this.p3.z;
+    const matrix6 = this.p1.y - y * this.p1.z;
+    const matrix7 = this.p2.y - y * this.p2.z;
+    const matrix8 = this.p3.y - y * this.p3.z;
 
     // Determinant, optimized for 1 1 1 row.
-    const invDet = 1 / ((matrix[4] * matrix[8] - matrix[5] * matrix[7]) -
-      (matrix[3] * matrix[8] - matrix[5] * matrix[6]) +
-      (matrix[3] * matrix[7] - matrix[4] * matrix[6]));
+    const invDet = 1 / ((matrix4 * matrix8 - matrix5 * matrix7) -
+      (matrix3 * matrix8 - matrix5 * matrix6) +
+      (matrix3 * matrix7 - matrix4 * matrix6));
 
     // First column of the matrix inverse formula.
     return [
-      invDet * (matrix[4] * matrix[8] - matrix[5] * matrix[7]),
-      invDet * (matrix[5] * matrix[6] - matrix[3] * matrix[8]),
-      invDet * (matrix[3] * matrix[7] - matrix[4] * matrix[6]),
+      invDet * (matrix4 * matrix8 - matrix5 * matrix7),
+      invDet * (matrix5 * matrix6 - matrix3 * matrix8),
+      invDet * (matrix3 * matrix7 - matrix4 * matrix6),
     ];
   }
 }

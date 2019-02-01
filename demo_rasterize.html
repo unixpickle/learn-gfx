@@ -46,9 +46,15 @@
 
       function initialize() {
         let angle = 0;
+        let sum = 0;
+        let count = 0;
         setInterval(() => {
           angle += 0.025;
+          const start = new Date().getTime();
           drawObject(angle);
+          sum += (new Date().getTime() - start);
+          count += 1;
+          console.log(sum / count);
         }, 50);
       }
 
