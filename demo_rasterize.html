@@ -36,7 +36,7 @@
         const framebuffer = new RastFramebuffer(canvas.width, canvas.height);
 
         const material = new LambertRastMaterial([0xff, 0xff, 0xff]);
-        const light = new THREE.Vector3(0, 0, -1);
+        const light = new THREE.Vector3(0, 0, 1);
 
         createTriangles(matrix2).forEach((triangle) => {
           triangle.render(viewport, framebuffer, material, [light]);

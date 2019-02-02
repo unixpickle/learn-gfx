@@ -197,7 +197,10 @@ class LambertRastMaterial extends RastMaterial {
   }
 
   color(point, normal, light) {
-    const brightness = light.dot(normal);
+    const vec = point.clone();
+    vec.sub(light);
+    vec.normalize();
+    const brightness = vec.dot(normal);
     const scale = Math.max(0, brightness);
     return [
       Math.round(this._color[0] * scale),
@@ -215,14 +218,15 @@ class PhongRastMaterial extends RastMaterial {
   }
 
   color(point, normal, light) {
-    const reflection = light.clone();
+    const reflection = point.clone();
+    reflection.sub(light);
     reflection.reflect(normal);
     reflection.normalize();
 
     const rayDir = point.clone();
     rayDir.normalize();
 
-    const brightness = light.dot(normal) *
+    const brightness = -reflection.dot(normal) *
       Math.pow(Math.abs(reflection.dot(rayDir)), this._power);
     return [
       Math.max(0, Math.round(this._color[0] * brightness)),
