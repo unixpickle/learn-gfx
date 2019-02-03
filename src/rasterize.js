@@ -190,6 +190,17 @@ class RastMaterial {
   }
 }
 
+class ConstRastMaterial extends RastMaterial {
+  constructor(color) {
+    super();
+    this._color = color;
+  }
+
+  color(point, normal, light) {
+    return this._color;
+  }
+}
+
 class LambertRastMaterial extends RastMaterial {
   constructor(color) {
     super();
