@@ -1,9 +1,10 @@
 class ShadowRastMaterial extends RastMaterial {
-  constructor(maps, material, sensitivity) {
+  constructor(maps, material, sensitivity, filterSize) {
     super();
     this.maps = maps;
     this.material = material;
     this.sensitivity = sensitivity;
+    this.filterSize = filterSize || 1;
   }
 
   color(point, normal, light) {
@@ -11,9 +12,13 @@ class ShadowRastMaterial extends RastMaterial {
       const map = this.maps[i];
       if (light.equals(map.light)) {
         const actualDepth = map.actualDepth(point);
-        const bufDepth = map.bufferDepth(point);
-        if (bufDepth === null || Math.abs(actualDepth - bufDepth) < this.sensitivity) {
-          return this.material.color(point, normal, light);
+        const frac = map.percentageCloser(point, this.sensitivity, this.filterSize);
+        if (frac > 0) {
+          const res = this.material.color(point, normal, light);
+          res[0] = Math.round(res[0] * frac);
+          res[1] = Math.round(res[1] * frac);
+          res[2] = Math.round(res[2] * frac);
+          return res;
         } else {
           return [0, 0, 0];
         }
@@ -48,17 +53,35 @@ class ShadowMap {
     return this.actualPoint(point).z;
   }
 
-  bufferDepth(point) {
+  percentageCloser(point, sensitivity, filterSize) {
+    const depth = this.actualDepth(point);
     const p = this.actualPoint(point);
     const sceneX = p.x / p.z;
     const sceneY = p.y / p.z;
     let [x, y] = this.viewport.sceneToView(sceneX, sceneY);
     x = Math.round(x);
     y = Math.round(y);
-    if (x < 0 || x >= this.size || y < 0 || y >= this.size) {
-      return null;
+    let count = 0;
+    let sum = 0;
+    for (let i = -(filterSize - 1); i <= filterSize - 1; ++i) {
+      for (let j = -(filterSize - 1); j <= filterSize - 1; ++j) {
+        if (x + j < 0 || x + j >= this.size || y + i < 0 || y + i >= this.size) {
+          continue;
+        }
+        ++count;
+        if (this.framebuffer.getDepth(x + j, y + i) - sensitivity < depth) {
+          ++sum;
+        }
+      }
     }
-    return this.framebuffer.getDepth(x, y);
+    if (count === 0) {
+      return 0;
+    }
+    return sum / count;
+  }
+
+  bufferDepth(point) {
+
   }
 }
 
